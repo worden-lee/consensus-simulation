@@ -3,8 +3,8 @@
 #define LCOMMUNICATOR_H
 
 #include "Communicator.h"
-#include "ParticleCommunity.h"
-#include <strstream.h>
+#include "Collective.h"
+#include <strstream>
 class StrainUID : public UniqueID
 {
 public:

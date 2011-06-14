@@ -1,68 +1,45 @@
 #include "FitnessLandscape.h"
-#include "Genotype.h"
-#include "ParticleCommunity.h"
+#include "BitString.h"
+#include "Collective.h"
 #include "LParameters.h"
 #include "Node.h"
 
-double FitnessLandscape::mortality(const Genotype &gen,
-				   const ParticleCommunity &context) const
+bool FitnessLandscape::isLocalPeak(const BitString &x) const
 {
-  double m;
-  if (lparameters.densityDependentMortality)
-    m = lparameters.delta_0
-          + lparameters.delta_1 * context.totalPop * lparameters.cellSize;
-  else
-    m = lparameters.delta_0;
-  return m;
-}
-
-double FitnessLandscape::fecundity(const Genotype &gen,
-				   const ParticleCommunity &context) const
-{
-  double fec = fitness(gen, context) * lparameters.maxFecundity;
-  if (lparameters.spaceLimitation)
-    fec *= 1 - context.totalPop / (double)lparameters.totalSpace;
-  return fec;
-}
-
-bool FitnessLandscape::isLocalPeak(const Genotype &x,
-				   const ParticleCommunity &context) const
-{
-  double kx = fecundity(x,context);
-  Genotype y;
-  for (int j = 0; j < Genotype::nBlocks; j++)
-    for (int k = 0; k < Genotype::blockSize; k++)
+  double kx = fitness(x);
+  BitString y;
+  for (int j = 0; j < BitString::nBlocks; j++)
+    for (int k = 0; k < BitString::blockSize; k++)
     {
       x.mutate(&y,j,k);
-      if (fecundity(y,context) >= kx)  // what to do if one is == ?
-	return false;
+      if (fitness(y) >= kx)  // what to do if one is == ?
+        return false;
     }
   return true;
 }
 
-void FitnessLandscape::drawLandscapeGraph(ostream &os,
-					  const ParticleCommunity& context)
+void FitnessLandscape::drawLandscapeGraph(ostream &os)
   const
 {
   // you will want to use something like 'dot -Tps -ols-1-6.ps' on this file
-  Genotype g = *(Genotype::wildType());
-  Genotype g1;
-  os << "graph \"ls-" << Genotype::nBlocks
-     << 'x' << Genotype::blockSize << "\" {\n"
+  BitString g = BitString::wildType();
+  BitString g1;
+  os << "graph \"ls-" << BitString::nBlocks
+     << 'x' << BitString::blockSize << "\" {\n"
     //     << "  page=\"8.5,11\";\n  ratio=auto;\n  ordering=out;\n";
      << "  page=\"8.5,11\";\n  rotate=90;\n  size=\"10,7.5\";\n"
      << "  ratio=fill;\n  ordering=out;\n";
   do
   { // first all vertices
-    double f = fitness(g,context);
+    double f = this->fitness(g);
     os << "  \"" << g << "\" [label = \"" << g << ": " << f
 	     << "\"];\n";
     ++g;
   }  while ( g != 0 );
   do
   { // second all edges
-    for (int j = 0; j < Genotype::nBlocks; j++)
-      for (int k = 0; k < Genotype::blockSize; k++)
+    for (int j = 0; j < BitString::nBlocks; j++)
+      for (int k = 0; k < BitString::blockSize; k++)
       {
 	g.mutate(&g1,j,k);
 	if ( g < g1 )
@@ -73,167 +50,120 @@ void FitnessLandscape::drawLandscapeGraph(ostream &os,
   os << "}\n";
 }
 
-void FitnessLandscape::writeLabel(const Strain &s,
-				  const ParticleCommunity& context,
-				  ostream &os) const
-{
-  double f = fitness(s.genotype,context);
-  os << "\" " << s.genotype << "\\n " << f << "\\n " << s.population << "\"";
-}
-
-void BlockFitnessLandscapeWithTreatment::writeLabel
-	(const Strain &s, const ParticleCommunity& context, ostream &os)
+void FitnessLandscape::drawQuasispeciesGraph(ostream &os) 
   const
 {
-  double f = fitness(s.genotype,context);
-  os << "\" " << s.genotype << "\\n " << f << "\\n ";
-  if ( lparameters.applyingDrugs(context.site->integrator->currentTime()) )
-    os << '(' << BlockFitnessLandscape::fitness(s.genotype,context) << ")\\n ";
-  os << s.population << "\"";
-}
-
-void FitnessLandscape::drawQuasispeciesGraph(ostream &os,
-					     const ParticleCommunity& context) 
-  const
-{
-  double totalPop = context.totalPop; 
   // you will want to use something like 'dot -Tps -ols-1-6.ps' on this file
   os << "graph \""
-     << Genotype::nBlocks << " block" << (Genotype::nBlocks==1?"":"s") << ", "
-     << Genotype::blockSize << " bit" << (Genotype::blockSize==1?"":"s")
-     << ", t=" << context.site->integrator->currentTime() << "\" {\n"
+     << BitString::nBlocks << " block" << (BitString::nBlocks==1?"":"s") << ", "
+     << BitString::blockSize << " bit" << (BitString::blockSize==1?"":"s")
+     << "\" {\n"
     //     << "  page=\"8.5,11\";\n  ratio=auto;\n  ordering=out;\n";
      << "  page=\"8.5,11\";\n  rotate=90;\n  size=\"10,7.5\";\n"
      << "  ratio=fill;\n  ordering=out;\n";
-  for (Strain *walk = context.strains; walk != NULL;
-       walk = (Strain*)walk->next)  
+#if 0
+  for (set<Strain*>::iterator walk = context.strains.begin();
+       walk != context.strains.end(); ++walk)
   { // first name all vertices
-    if ( walk->population > 0 )
-    {
-      Genotype &g = walk->genotype;
-      os << "  \"" << g << "\" [label = ";
-      writeLabel(*walk,context,os);
-      bool ilp = isLocalPeak(g,context);
-      if ( ilp )
-        os << ", style=bold, style=filled, fontcolor=white"
-	  /*<< ", fontname=Helvetica"*/;
-      if (ilp || (walk->population/totalPop > 0.001))
-	os << ", color=\"0 1 "
-	   << (1-log(walk->population/totalPop)/log(0.001)) << "\"";
-      os << "];\n";
+    BitString &g = (*walk)->genotype;
+    os << "  \"" << g << "\" [label = ";
+    writeLabel(**walk,context,os);
+    bool ilp = isLocalPeak(g,context);
+    if ( ilp )
+      os << ", style=bold, style=filled, fontcolor=white";
+    os << ", color=\"0 1 1\"";
+    os << "];\n";
+  }
+  BitString g1;
+  Strain s1(&g1);
+  for (set<Strain*>::iterator walk = context.strains.begin();
+       walk != context.strains.end(); ++walk)
+  { // now draw all edges
+    BitString &g = (*walk)->genotype;
+    for (int j = 0; j < BitString::nBlocks; j++)
+     for (int k = 0; k < BitString::blockSize; k++)
+     {
+       g.mutate(&g1,j,k);
+       if (g1 > (*walk)->genotype)
+       { // FIXME this probably doesn't work
+         set<Strain*>::iterator fs1 = context.strains.find(&s1);
+         if ( (fs1 != context.strains.end()) )
+         {
+           os << "  \"" << g << "\" -- \"" << g1 << "\"";
+           os << " [color=\"0 1 1\"]";
+           os << ";\n";
+         }
+       }
     }
   }
-  Genotype g1;
-  Strain s1(&g1);
-  for (Strain *walk = context.strains; walk != NULL;
-       walk = (Strain*)walk->next)  
-    if (walk->population > 0)
-    { // now draw all edges
-      Genotype &g = walk->genotype;
-      for (int j = 0; j < Genotype::nBlocks; j++)
-	for (int k = 0; k < Genotype::blockSize; k++)
-	{
-	  g.mutate(&g1,j,k);
-	  Strain *fs1 = (Strain*)s1.findOnList(walk->next);
-	  if ( (fs1 != NULL) && (fs1->population > 0) )
-	  {
-	    double bigger = fs1->population;
-	    if (walk->population > bigger) bigger = walk->population;
-	    os << "  \"" << g << "\" -- \"" << g1 << "\"";
-	    if (bigger/totalPop > 0.001)
-	      os << " [color=\"0 1 "
-		 << (1-log(bigger/totalPop)/log(0.001)) << "\"]";
-	    os << ";\n";
-	  }
-	}
-    }
+#endif
   os << "}\n";
 }
+ 
+void FitnessLandscape::writeLabel(const BitString &s,
+				  ostream &os) const
+{
+  double f = fitness(s);
+  os << "\" " << s << "\\n " << f << "\"";
+}
 
-Genotype *expFitnessLandscape::refGenotype = Genotype::wildType();
+BitString &expFitnessLandscape::refBitString = BitString::wildType();
 
-double expFitnessLandscape::fitness(const Genotype &gen,
-				      const ParticleCommunity &context) const
+double expFitnessLandscape::fitness(const BitString &gen) const
 {
   const double lambda = 1;
-  int dist = refGenotype->hammingDistance(gen);
+  int dist = refBitString.hammingDistance(gen);
   return exp(- lambda * dist);
 }
 
 /* BlockFitnessLandscape produces uncorrelated fitness function for each
    block by using DES encryption
 */
-BlockFitnessLandscape::BlockFitnessLandscape()
-{
-  des_cblock keyblock;
-  des_string_to_key(lparameters.desKey,&keyblock);
-  des_check_key = true;
-  if ( des_set_key(&keyblock,keyschedule) )
-    cerr << "DES Error setting key!!\n";
-}
+BlockFitnessLandscape::BlockFitnessLandscape(double water) : waterline(water)
+{}
 
 /* returns fitness from 0 to maxFecundity for each block
    thus these values should be averaged, not summed
 */
+#include <openssl/sha.h>
+#include <numeric>
 double BlockFitnessLandscape::blockFitness(int *block, int blockno) const
 {
+#if 0
   des_cblock outblock;
   // ivec is a kind of seed for the encryption
   //  include blockno so each block's landscape is different
   des_cblock ivec = {0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10+blockno};
   // compute des checksum from the block value
-  des_cbc_cksum((des_cblock*)block, &outblock, (Genotype::blockSize+7)/8,
+  des_cbc_cksum((des_cblock*)block, &outblock, (BitString::blockSize+7)/8,
 		(des_ks_struct*)keyschedule, &ivec);
   // reduce checksum into a single int using xor
   // this code will be in trouble if cblock stops being the size of 2 ints
   unsigned int *cksump = (unsigned int*)&outblock;
   unsigned int cksum = cksump[0] ^ cksump[1];
+#endif
+  string hash_string =
+    string(lparameters.hashKey()).append(string(1, (char)blockno))
+      .append((char *)block, (BitString::blockSize+7)/8);
+  unsigned char *hash = SHA1((const unsigned char*)hash_string.c_str(), 
+      hash_string.length(), NULL);
+  unsigned int *hash_ints_begin = (unsigned int *)hash;
+  unsigned int n_hash_ints = 
+    (SHA_DIGEST_LENGTH*sizeof(unsigned char))/sizeof(unsigned int);
+  unsigned int cksum =
+    std::accumulate(hash_ints_begin, hash_ints_begin + n_hash_ints, 0);
 
   static double factor = 1 / (1 + (double)UINT_MAX);
-  //  if (factor == 0) 
-  //    factor = 1 / (1 + (double)UINT_MAX);
   return cksum * factor;
 }
 
-double BlockFitnessLandscape::fitness(const Genotype&x,
-				      const ParticleCommunity& context) const
+double BlockFitnessLandscape::fitness(const BitString&x) const
 {
   double fitness = 0;
-  for ( int i = 0; i < Genotype::nBlocks; i++ )
+  for ( int i = 0; i < BitString::nBlocks; i++ )
     fitness += blockFitness((int*)&x.genome[i], i);
-  fitness /= Genotype::nBlocks;
-  return fitness;
-}
-
-double BlockFitnessLandscapeWithTreatment::fitness(const Genotype&x,
-						   const ParticleCommunity&
-						     context) const
-{
-  static bool debugging = false;
-  double fitness = BlockFitnessLandscape::fitness(x, context);
-  if (debugging) cout << "raw fitness " << fitness << endl
-		       << "distance = "
-		       << lparameters.wildType->hammingDistance(x) << endl
-		       << "effect " << treatmentEffect(x) << endl;
-  if ( lparameters.applyingDrugs(context.site->integrator->currentTime()) )
-    fitness *= treatmentEffect(x);
-  if ( debugging) cout << "new fitness " << fitness << endl
-		       << endl;
-  return fitness;
-}
-
-double BlockFitnessLandscapeWithTreatment::treatmentEffect(const Genotype&x)
-  const
-{
-  int dist = lparameters.wildType->hammingDistance(x);
-  if (lparameters.treatmentEffectSD > 0)
-    return 1 - (1 - lparameters.treatmentEffectAtWT) * 
-                    exp( - (dist*dist) / (lparameters.treatmentEffectSD*
-					  lparameters.treatmentEffectSD) );
-  else if (lparameters.treatmentEffectSD == 0)
-    return (dist == 0) ? lparameters.treatmentEffectAtWT : 1;
-  else // ??
-    return 0;
+  fitness /= BitString::nBlocks;
+  return fitness - waterline;
 }
 
 // built in:
@@ -245,18 +175,17 @@ double BlockFitnessLandscapeWithTreatment::treatmentEffect(const Genotype&x)
 //   2-mutation (1,12) by 1.03
 #if 1
 //assumes genotype is defined as 1 block
-double MurrayFitnessLandscape::fitness(const Genotype &x,
-				       const ParticleCommunity& context) const
+double MurrayFitnessLandscape::fitness(const BitString &x) const
 {
-  static Genotype *wt = Genotype::wildType();
-  int distance = wt->hammingDistance(x);
+  static BitString &wt = BitString::wildType();
+  int distance = wt.hammingDistance(x);
   switch(distance)
   {
   case 0: // wild type
     return 1;
   case 1: // 1-mutation
       // feasible only if all the set bits are in the first feasible_n bits
-    for (int i = 1; i < Genotype::wordsPerBlock; i++)
+    for (int i = 1; i < BitString::wordsPerBlock; i++)
       if (x.genome[0].words[i])
 	return 0;
 #if USE_EXTRA_BITS
@@ -280,7 +209,7 @@ double MurrayFitnessLandscape::fitness(const Genotype &x,
     // if not one of the 'approved' 1-mutations
     return 0;
   case 2: // 2-mutation
-    for (int i = 1; i < Genotype::wordsPerBlock; i++)
+    for (int i = 1; i < BitString::wordsPerBlock; i++)
       if (x.genome[0].words[i])
 	return 0;
 #if USE_EXTRA_BITS
@@ -307,24 +236,24 @@ double MurrayFitnessLandscape::fitness(const Genotype &x,
     return 0;
   }
 }
-#else 1
-double MurrayFitnessLandscape::fitness(const Genotype &x,
-				       const ParticleCommunity& context) const
+#else //1
+double MurrayFitnessLandscape::fitness(const BitString &x,
+				       const Collective& context) const
 {
   // for now, without drugs
-  static Genotype &wt = Genotype::wildType();
+  static BitString &wt = BitString::wildType();
   int distance = wt.hammingDistance(x);
   if (distance == 0)
     return 1;
-  else if (distance <= lparameters.max_distance)
+  else if (distance <= lparameters.max_distance())
   {  // feasible only if all the set bits are in the first feasible_n bits
-    int feas = lparameters.feasible_n[distance];
+    int feas = lparameters.feasible_n()[distance];
     int word = 0; // assume 1 block here
 
     // skip any words that are all feasible
-    while (feas >= Genotype::bitsPerWord)
+    while (feas >= BitString::bitsPerWord)
     {
-      feas -= Genotype::bitsPerWord;
+      feas -= BitString::bitsPerWord;
       word++;
     }
     // test word that is partially feasible
@@ -332,7 +261,7 @@ double MurrayFitnessLandscape::fitness(const Genotype &x,
     {
       BLOCK_WORD_TYPE mask = ~((((BLOCK_WORD_TYPE)1) << feas) - 1);
 #if USE_EXTRA_BITS
-      if (word == Genotype::wordsPerBlock)
+      if (word == BitString::wordsPerBlock)
       { // it's in the extra bits
 	if (x.genome[0].extraBits & mask)
 	  return 0;
@@ -347,7 +276,7 @@ double MurrayFitnessLandscape::fitness(const Genotype &x,
     }
 
     // test any remaining words in entirety
-    while (word < Genotype::wordsPerBlock)
+    while (word < BitString::wordsPerBlock)
     {
       if (x.genome[0].words[word])
 	return 0;
@@ -355,7 +284,7 @@ double MurrayFitnessLandscape::fitness(const Genotype &x,
     }    
     // test extra bits if haven't yet
 #if USE_EXTRA_BITS
-    if (word == Genotype::wordsPerBlock)
+    if (word == BitString::wordsPerBlock)
       if (x.genome[0].extraBits)
 	return 0;
 #endif
@@ -365,11 +294,10 @@ double MurrayFitnessLandscape::fitness(const Genotype &x,
   else // if distance is too great
     return 0;
 }
-#endif 0
+#endif //0
 
 // assumes 1 block of 1 word
-double SinglePeakFitnessLandscape::fitness(const Genotype &x,
-					   const ParticleCommunity& context)
+double SinglePeakFitnessLandscape::fitness(const BitString &x)
   const
 {
   switch ( x.genome[0].words[0] )

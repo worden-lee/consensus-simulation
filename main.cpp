@@ -5,9 +5,9 @@
  * 4/28/2000  Lee Worden
  * 10/20/2000 Lee Worden
 */
-#include "ParticleCommunity.h"
-#include "ParticleIntegrator.h"
-#include "LValueWriter.h"
+#include "Collective.h"
+//#include "ParticleIntegrator.h"
+//#include "LValueWriter.h"
 #include "LParameters.h"
 #include "LCommunicator.h"
 #include "LNode.h"
@@ -26,8 +26,8 @@
 //  for a new project
 void LSite::finishInitialize(void)
 {
-  integrator = new ParticleIntegrator;
-  community = new ParticleCommunity;
+  integrator = new Iterator;
+  community = new Collective;
   communicator = new LCommunicator;
   valuewriter = new LValueWriter;
   Site::finishInitialize();

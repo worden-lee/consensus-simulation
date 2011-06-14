@@ -1,0 +1,28 @@
+groupSize 1
+
+hashKey There is a rose in Spanish Harlem
+nBlocks 1
+blockSize 4
+
+runDot true//false
+
+// override values from Parameters class
+
+logToCout true
+diffusionTimeStep 1
+outputTimeStep 1
+
+doSpeciation false
+doExtinction false
+outputExtinctions false
+outputTiming false
+useAuxDataFiles false//true;
+runGnuplot true
+
+outputDirectory out
+# randSeed time(0)
+runLength -1
+totalGridSize 1
+sitesPerProcessor 1
+rowLength 1
+

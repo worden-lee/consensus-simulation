@@ -1,0 +1,9 @@
+consensus-simulation
+Schematic exploration of consensus process by Lee Worden
+
+Requires adap-dyn library - pull that from 
+git@github.com:worden-lee/adap-dyn.git
+and satisfy its dependencies as well
+
+Then 'make' followed by './consensus' ought to do it.
+It puts its output in 'out/'.

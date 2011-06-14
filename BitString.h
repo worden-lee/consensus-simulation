@@ -1,19 +1,19 @@
-#ifndef GENOTYPE_H
-#define GENOTYPE_H
+#ifndef BITSTRING_H
+#define BITSTRING_H
 
 #include "LParameters.h"
 #include <limits.h>
-#include <fstream.h>
+#include <fstream>
 
 /*
- * Genotype class embodies a list of equal-size blocks of bits
+ * BitString class embodies a list of equal-size blocks of bits
  *
  * The BlockFitnessLandscape class is well prepared to evaluate fitness
  *  (aka fecundity/infectivity) of these objects
  *
  * WARNING:  Make sure there aren't any stray bits in the padding
  *  section of the block structs, as they may get into the fitness
- *  function, which uses DES encryption with a granularity of (I think)
+ *  function, which uses a SHA1 hash with a granularity of (I think)
  *  bytes
  */
 
@@ -29,7 +29,7 @@
 #  define BITS_PER_WORD 32
 #  define BLOCK_WORD_TYPE unsigned int
 #else
-#  error Genotype.h has to be rewritten for different size int!
+#  error BitString.h has to be rewritten for different size int!
 #endif
 
 #define WORDS_PER_BLOCK (BLOCKSIZE / BITS_PER_WORD)
@@ -41,7 +41,7 @@
 #  define USE_EXTRA_BITS 0
 #endif
 
-class Genotype
+class BitString
 {
 public:
   // class stuff
@@ -60,34 +60,35 @@ public:
   block genome[NBLOCKS];
 
   // functions
-  Genotype(void);
+  BitString(void);
     // arguments must be ((wordsPerBlock + (useExtraBits?1:0)) * nBlocks)
     //  number of BLOCK_WORD_TYPEs
-  Genotype(BLOCK_WORD_TYPE b0, ...);
+  BitString(BLOCK_WORD_TYPE b0, ...);
 
-  unsigned int hammingDistance(const Genotype&) const;
+  unsigned int hammingDistance(const BitString&) const;
 
   // create a mutation of *this at random
-  Genotype *mutate(void) const;
+  BitString *mutate(void) const;
   // create a mutation at block 'bl', bit 'bi'
-  Genotype *mutate(int bl, int bi) const;
+  BitString *mutate(int bl, int bi) const;
   // store a mutation of *this in *destination
-  void mutate(Genotype *destination) const;
-  void mutate(Genotype *destination, int bl, int bi) const;
+  void mutate(BitString *destination) const;
+  void mutate(BitString *destination, int bl, int bi) const;
 
   void randomize(void);
 
-  static Genotype *wildType(void);
+  static BitString &wildType(void);
 
-  Genotype &operator++(void);
+  BitString &operator++(void);
 
-  bool operator == (const Genotype&other) const;
-  bool operator != (const Genotype&other) const { return !(*this==other); }
-  bool operator < (const Genotype&other) const; // for sorting
+  bool operator == (const BitString&other) const;
+  bool operator != (const BitString&other) const { return !(*this==other); }
+  bool operator < (const BitString&other) const; // for sorting
+  bool operator > (const BitString&other) const { return (other < *this); }
 
   const char *hexString(void) const;
-  friend ostream& operator<< (ostream &o, const Genotype &comm);
+  friend ostream& operator<< (ostream &o, const BitString &comm);
  protected:
 };
 
-#endif GENOTYPE_H
+#endif //BITSTRING_H

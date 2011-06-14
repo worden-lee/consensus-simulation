@@ -20,4 +20,4 @@ public:
     timeToQuit(false) {}
 };
 
-#endif PARTICLE_INTEGRATOR_H
+#endif //PARTICLE_INTEGRATOR_H

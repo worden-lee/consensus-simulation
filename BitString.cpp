@@ -1,14 +1,14 @@
-#include "Genotype.h"
+#include "BitString.h"
 #include "rand.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 
-Genotype::Genotype(void)
+BitString::BitString(void)
 {
 }
 
-Genotype::Genotype(BLOCK_WORD_TYPE b0, ...)
+BitString::BitString(BLOCK_WORD_TYPE b0, ...)
 {
   va_list va;
   va_start(va,b0);
@@ -26,9 +26,9 @@ Genotype::Genotype(BLOCK_WORD_TYPE b0, ...)
   va_end(va);
 }
 
-Genotype *Genotype::wildType(void)
+BitString &BitString::wildType(void)
 {
-  static Genotype swt;
+  static BitString swt;
   static bool didInit = false;
   if ( !didInit )
   {
@@ -42,10 +42,10 @@ Genotype *Genotype::wildType(void)
     }
     didInit = true;
   }
-  return &swt;
+  return swt;
 }
 
-unsigned int Genotype::hammingDistance(const Genotype&other) const
+unsigned int BitString::hammingDistance(const BitString&other) const
 {
   int distance = 0;
   for ( int i = 0; i < nBlocks; i++ )
@@ -71,30 +71,31 @@ unsigned int Genotype::hammingDistance(const Genotype&other) const
   return distance;
 }
 
-Genotype *Genotype::mutate(void) const
+BitString *BitString::mutate(void) const
 {
-  Genotype *mutant = new Genotype();
+  BitString *mutant = new BitString();
   mutate(mutant);
   return mutant;
 }
 
-Genotype *Genotype::mutate(int bl, int bi) const
+BitString *BitString::mutate(int bl, int bi) const
 {
-  Genotype *mutant = new Genotype();
+  BitString *mutant = new BitString();
   mutate(mutant, bl, bi);
   return mutant;
 }
 
-void Genotype::mutate(Genotype *mutant) const
+void BitString::mutate(BitString *mutant) const
 {
   int mbl = rand_index(nBlocks);
   int mbi = rand_index(blockSize);
   mutate(mutant, mbl, mbi);
 }
 
-void Genotype::mutate(Genotype *mutant, int mbl, int mbi) const
+void BitString::mutate(BitString *mutant, int mbl, int mbi) const
 {
-  mutant->genome = this->genome;
+  //mutant->genome = this->genome;
+  std::copy(this->genome, this->genome + NBLOCKS, mutant->genome);
   int mi = mbi / BITS_PER_WORD;
   mbi -= (mi * BITS_PER_WORD);
 #if USE_EXTRA_BITS
@@ -105,22 +106,22 @@ void Genotype::mutate(Genotype *mutant, int mbl, int mbi) const
     mutant->genome[mbl].words[mi]  ^= 1U << mbi;
 }
 
-void Genotype::randomize(void)
+void BitString::randomize(void)
 {
     // initialize random genotype
-  for (int j = 0; j < Genotype::nBlocks; j++)
+  for (int j = 0; j < BitString::nBlocks; j++)
   {
-    for ( int k = 0; k < Genotype::wordsPerBlock; k++ )
+    for ( int k = 0; k < BitString::wordsPerBlock; k++ )
       genome[j].words[k] = genrand2i();
 #if USE_EXTRA_BITS
     // careful with this 1U if sizeof extraBits gets big
-    const static BLOCK_WORD_TYPE mask = (1U << Genotype::nExtraBits) - 1;
+    const static BLOCK_WORD_TYPE mask = (1U << BitString::nExtraBits) - 1;
     genome[j].extraBits = genrand2i() & mask;
 #endif
   }
 }
 
-Genotype &Genotype::operator++(void)
+BitString &BitString::operator++(void)
 {
   for(int i = 0; i < nBlocks; i++ )
   {
@@ -137,7 +138,7 @@ Genotype &Genotype::operator++(void)
   return *this;  // if we get here we've turned over to 0
 }
       
-bool Genotype::operator==(const Genotype& other) const
+bool BitString::operator==(const BitString& other) const
 {
   for ( int i = 0; i < nBlocks; i++ )
   {
@@ -152,7 +153,7 @@ bool Genotype::operator==(const Genotype& other) const
   return true;
 }
 
-bool Genotype::operator<(const Genotype& other) const
+bool BitString::operator<(const BitString& other) const
 {
   for ( int i = 0; i < nBlocks; i++ )
   {
@@ -172,23 +173,23 @@ bool Genotype::operator<(const Genotype& other) const
 }
 
 // assumes 32 bit BLOCK_WORD_TYPE
-const char *Genotype::hexString(void) const
+const char *BitString::hexString(void) const
 {
-  const int length = Genotype::nBlocks * (
+  const int length = BitString::nBlocks * (
 #if USE_EXTRA_BITS
 					  (1+(N_EXTRA_BITS+3)/4) + 
 #endif
-					  9*Genotype::wordsPerBlock);
+					  9*BitString::wordsPerBlock);
   static char name[length];
   name[0] = '\0';
   bool fi = true;
-  for ( int i = 0; i < Genotype::nBlocks; i++ )
+  for ( int i = 0; i < BitString::nBlocks; i++ )
   {
     if ( fi ) fi = false;
     else strcat(name," ");
     
     bool fj = true;
-    for ( int j = 0; j < Genotype::wordsPerBlock; j++ )
+    for ( int j = 0; j < BitString::wordsPerBlock; j++ )
       sprintf(name+strlen(name),
 	      fj?((fj=false),"%.8x"):" %.8x",genome[i].words[j]);
 #if USE_EXTRA_BITS
@@ -204,7 +205,7 @@ const char *Genotype::hexString(void) const
   return name;
 }
 
-ostream& operator<< (ostream &o, const Genotype &gen)
+ostream& operator<< (ostream &o, const BitString &gen)
 {
   return o << gen.hexString();
 }

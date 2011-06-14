@@ -1,6 +1,6 @@
 #include "ParticleIntegrator.h"
-#include "ParticleCommunity.h"
-#include "LValueWriter.h"
+#include "Collective.h"
+//#include "LValueWriter.h"
 #include "LParameters.h"
 #include "Node.h"
 #include "rand.h"
@@ -8,20 +8,20 @@
 
 void ParticleIntegrator::integrate(double t0, double t1)
 {
-  ParticleCommunity &comm = *(ParticleCommunity*)(site->community);
+  Collective &comm = *(Collective*)(site->community);
     
   for ( t = t0; t1 < 0 || t < t1; t += lparameters.delta_t )
   {
-    if (t > t0)
-      ((LValueWriter*)(site->valuewriter))->recordValues(t);
+    //if (t > t0)
+    //  ((LValueWriter*)(site->valuewriter))->recordValues(t);
 
     comm.recalcTotalPop();
     if ( comm.totalPop == 0 )
     {
-      site->node->valuewriter->log("No more population.\n");
+      //site->node->valuewriter->log("No more population.\n");
       //      t = t1;
       //cout << "No more population.\n";
-      site->valuewriter->flush();
+      //site->valuewriter->flush();
       timeToQuit = true;
       return;
     }
@@ -34,41 +34,41 @@ void ParticleIntegrator::integrate(double t0, double t1)
       {
 	dominant = currentDom;
 	dominantSince = t;
-	if (t > 0)
-	  site->node->valuewriter->log("(t = %g) new dominant strain %s"
-				       " (%g)\n",
-				       t, dominant->genotype.hexString(),
-				       lparameters.fitnessLandscape
-				       ->fitness(dominant->genotype,
-						 comm));
-	if (dominant == keepFittest)
-	  site->node->valuewriter->log("(t = %g) possible equilibrium\n", t);
+	//if (t > 0)
+	  //site->node->valuewriter->log("(t = %g) new dominant strain %s"
+		//		       " (%g)\n",
+		//		       t, dominant->genotype.hexString(),
+		//		       lparameters.fitnessLandscape
+		//		       ->fitness(dominant->genotype,
+		//				 comm));
+	//if (dominant == keepFittest)
+	//  site->node->valuewriter->log("(t = %g) possible equilibrium\n", t);
       }
       if ( fittest->population > lparameters.significantPopulationThreshold )
       {
 	if (fittest != keepFittest )
 	{
-	  site->node->valuewriter->log("(t = %g) new fittest %s (%g)\n",
-				       t, fittest->genotype.hexString(),
-				       lparameters.fitnessLandscape->
-				       fitness(fittest->genotype,
-					       comm));
+	  //site->node->valuewriter->log("(t = %g) new fittest %s (%g)\n",
+		//		       t, fittest->genotype.hexString(),
+		//		       lparameters.fitnessLandscape->
+		//		       fitness(fittest->genotype,
+		//			       comm));
 	  keepFittest = fittest;
 
 	  if ( fittest != dominant )
 	  {
 	    //if (t - equilibriumSince > 1)
-	    site->node->valuewriter->log("(t = %g) no equilibrium\n", t);
+	    //site->node->valuewriter->log("(t = %g) no equilibrium\n", t);
 	  }
-	  else //if (equilibriumSince >= t - lparameters.delta_t)  
-	    site->node->valuewriter->log("(t = %g) possible equilibrium\n", t);
+	  //else //if (equilibriumSince >= t - lparameters.delta_t)  
+	    //site->node->valuewriter->log("(t = %g) possible equilibrium\n", t);
 	}
 	if ( fittest != dominant )
 	  equilibriumSince = t;
       }
     }
-    if (t - equilibriumSince > lparameters.equilibriumTime)
-      site->node->valuewriter->log("(t = %g) found equilibrium\n", t);
+    //if (t - equilibriumSince > lparameters.equilibriumTime)
+      //site->node->valuewriter->log("(t = %g) found equilibrium\n", t);
 
     if ( lparameters.applyDrugs )
     {
@@ -81,13 +81,13 @@ void ParticleIntegrator::integrate(double t0, double t1)
 	    (!lparameters.applyDrugsAtEquilibrium &&
 	     (t - dominantSince > lparameters.waitingTimeForTreatment)))
 	{
-	  site->node->valuewriter->log("wild type for treatment = %s (%g)\n",
-				       dominant->genotype.hexString(),
-				       lparameters.fitnessLandscape->
-				       fitness(dominant->genotype,
-					       comm));
-	  site->node->valuewriter->log("(t = %g) start treatment ----------\n",
-				       t);
+	  //site->node->valuewriter->log("wild type for treatment = %s (%g)\n",
+				       //dominant->genotype.hexString(),
+				       //lparameters.fitnessLandscape->
+				       //fitness(dominant->genotype,
+					       //comm));
+	  //site->node->valuewriter->log("(t = %g) start treatment ----------\n",
+				       //t);
 	  lparameters.wildType = &dominant->genotype;
 	  //lparameters.treatmentStarted = t;
 	  lparameters.treating = true;
@@ -98,8 +98,8 @@ void ParticleIntegrator::integrate(double t0, double t1)
 	else if ((lparameters.applyDrugsAtEquilibrium &&
 		  (t - dominantSince > lparameters.maxWaitForEquilibrium)))
 	{
-	  site->node->valuewriter->log("(t = %g) waiting too long "
-				       "before treatment\n", t);
+	  //site->node->valuewriter->log("(t = %g) waiting too long "
+				       //"before treatment\n", t);
 	  timeToQuit = true;
 	  return;
 	}
@@ -112,12 +112,12 @@ void ParticleIntegrator::integrate(double t0, double t1)
 		  (t > lparameters.treatmentStarted +
 		   lparameters.treatmentDuration))) )
 	{
-	  site->node->valuewriter->log("new wild type = %s (%g)\n",
-				       dominant->genotype.hexString(),
-				       lparameters.fitnessLandscape->
-				       fitness(dominant->genotype, comm));
-	  site->node->valuewriter->log("(t = %g) stop treatment ----------\n",
-				       t);
+	  //site->node->valuewriter->log("new wild type = %s (%g)\n",
+				       //dominant->genotype.hexString(),
+				       //lparameters.fitnessLandscape->
+				       //fitness(dominant->genotype, comm));
+	  //site->node->valuewriter->log("(t = %g) stop treatment ----------\n",
+				       //t);
 	  stopped = true;
 	  lparameters.treating = false;
 	  equilibriumSince = dominantSince = t - 1;
@@ -125,8 +125,8 @@ void ParticleIntegrator::integrate(double t0, double t1)
 	else if ((lparameters.stopDrugsAtEquilibrium &&
 		  (t - dominantSince > lparameters.maxWaitForEquilibrium)))
 	{
-	  site->node->valuewriter->log("(t = %g) waiting too long "
-				       "in treatment\n", t);
+	  //site->node->valuewriter->log("(t = %g) waiting too long "
+				       //"in treatment\n", t);
 	  timeToQuit = true;
 	  return;
 	}	  
@@ -140,21 +140,21 @@ void ParticleIntegrator::integrate(double t0, double t1)
 		     lparameters.treatmentDuration >
 		     lparameters.waitingTimeForTreatment)) ))
 	{
-	  site->node->valuewriter->log("final wild type = %s\n",
-				       dominant->genotype.hexString());
-	  site->node->valuewriter->log("hamming distance "
-				       "from wild type = %u\n",
-				       lparameters.wildType->
-				       hammingDistance(dominant->genotype));
-	  site->node->valuewriter->log("(t = %g) end of run.\n", t);
+	  //site->node->valuewriter->log("final wild type = %s\n",
+				       //dominant->genotype.hexString());
+	  //site->node->valuewriter->log("hamming distance "
+				       //"from wild type = %u\n",
+				       //lparameters.wildType->
+				       //hammingDistance(dominant->genotype));
+	  //site->node->valuewriter->log("(t = %g) end of run.\n", t);
 	  timeToQuit = true;
 	  return;
 	}
 	else if ((lparameters.endRunAtEquilibrium &&
 		  (t - dominantSince > lparameters.maxWaitForEquilibrium)))
 	{
-	  site->node->valuewriter->log("(t = %g) waiting too long "
-				       "after treatment\n", t);
+	  //site->node->valuewriter->log("(t = %g) waiting too long "
+				       //"after treatment\n", t);
 	  timeToQuit = true;
 	  return;
 	}
@@ -178,11 +178,11 @@ void ParticleIntegrator::integrate(double t0, double t1)
 	k *= lparameters.delta_t;
 	
 	// generate the mutants
-	const int nPos = Genotype::nBlocks * Genotype::blockSize;
+	const int nPos = BitString::nBlocks * BitString::blockSize;
 	// prob of mutation at given position
 	double pgamma = lparameters.p_mutation / nPos;
-	for ( int bl = 0; bl < Genotype::nBlocks; bl++ )
-	  for ( int bi = 0; bi < Genotype::blockSize; bi++ )
+	for ( int bl = 0; bl < BitString::nBlocks; bl++ )
+	  for ( int bi = 0; bi < BitString::blockSize; bi++ )
 	  {
 	    //int nmut = (int)bnldev(pgamma, nOffspring);
 				// # of this mutant generated
@@ -190,7 +190,7 @@ void ParticleIntegrator::integrate(double t0, double t1)
 	    if ( nmut > 0 )
 	    {
 	      //nOffspring -= nmut;
-	      Genotype *mutant = x->genotype.mutate(bl,bi);
+	      BitString *mutant = x->genotype.mutate(bl,bi);
 	      //Strain *ylast = NULL;
 	      bool inserted = false;
 	      for ( Strain *y = comm.strains; y != NULL;
@@ -302,7 +302,7 @@ void ParticleIntegrator::integrate(double t0, double t1)
 	  if ( x->population <= 0 && x->newpop <= 0 )
 	  {
 	    comm.strains = (Strain *)x->removeFromList(comm.strains);
-	    site->valuewriter->extinction(t,(StrainVariableIndex)x);
+	    //site->valuewriter->extinction(t,(StrainVariableIndex)x);
 	    delete x;
 	  }
 	}
@@ -329,7 +329,7 @@ void ParticleIntegrator::integrate(double t0, double t1)
     }  // end of for ( x )
   }  // end of for (t)
   
-  ((LValueWriter*)(site->valuewriter))->recordValues(t);
-  site->valuewriter->flush();
+  //((LValueWriter*)(site->valuewriter))->recordValues(t);
+  //site->valuewriter->flush();
 }
 

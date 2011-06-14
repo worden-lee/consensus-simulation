@@ -1,18 +1,18 @@
 CXX=g++
 MPI=no
 
-CFLAGS= -Wall -g -I$(LIBDIR) $(OTHERCFLAGS) # -O3
+CFLAGS= -Wall -g -I$(LIBDIR) -I$(LIBDIR)/Displays $(OTHERCFLAGS) # -O3
 #CFLAGS=-Wall -g -O3
-LDFLAGS = -L$(LIBDIR) -l$(LIBNAME) -ldes -lm -lstdc++
+LDFLAGS = -L$(LIBDIR) -l$(LIBNAME) -L../vxl/lib -lvnl_algo -lvnl -lvcl -lnetlib -lssl -lm -lstdc++
 #OTHER_CFLAGS = -I$(LIBDIR)
 
-SOURCES = ParticleCommunity.cpp ParticleIntegrator.cpp FitnessLandscape.cpp \
-	Genotype.cpp LValueWriter.cpp LParameters.cpp LSimulation.cpp
+SOURCES = Collective.cpp FitnessLandscape.cpp Individual.cpp \
+	BitString.cpp LParameters.cpp ConsensusSimulation.cpp LOutputController.cpp
 OBJS = $(SOURCES:.cpp=.o)
 
-EXE = hiv
+EXE = consensus
 LIBNAME = adap-dyn
-LIBDIR = ../../adap-dyn
+LIBDIR = ../adap-dyn
 LIBSTEM = lib$(LIBNAME).a
 LIB = $(LIBDIR)/$(LIBSTEM)
 
@@ -38,8 +38,8 @@ dot:
 #	dot -Tps -o out/landscape.ps out/0/landscape.dot
 #out/0/landscape.dot: 
 
-out/quasispecies.ps: out/0/quasispecies.dot
-	dot -Tps -o out/quasispecies.ps out/0/quasispecies.dot
+#out/quasispecies.ps: out/0/quasispecies.dot
+#	dot -Tps -o out/quasispecies.ps out/0/quasispecies.dot
 
 run: $(EXE) clear
 	$(EXE)
@@ -63,22 +63,26 @@ dummy:
 #.cc.o:
 #	$(CXX) $(CFLAGS) -c -o $@ $<
 
-#.cpp.o:
 %.o : %.cpp
-	$(CXX) $(CFLAGS) -c -o $@ $<
+	$(CXX) $(CFLAGS) -MD -c -o $@ $<
+	@cp $*.d $*.P; \
+	    sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+	        -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.P; \
+	    rm -f $*.d
+
+%.o : %.c
+	$(CC) $(CFLAGS) -MD -c $< -o $@
+	@cp $*.d $*.P; \
+	    sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+	        -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.P; \
+	    rm -f $*.d
 
 #ALLOBJS = $(OBJS) $(OTHER_OBJS) $(RAND_OBJS)
 ALLOBJS = *.o
 
 FLOTSAM = core test-des *.idb *.pdb *.exe *.ilk *.obj *~ *\# #out/*
 
-# header file dependencies (surely incomplete)
-Genotype.o::Genotype.h LParameters.h
-FitnessLandscape.o::FitnessLandscape.h Genotype.h LParameters.h
-ParticleIntegrator.o::ParticleIntegrator.h FitnessLandscape.h LParameters.h \
-	Genotype.h
-ParticleCommunity.o::ParticleCommunity.h Genotype.h
-LValueWriter.o::LValueWriter.h LParameters.h Genotype.h
-LParameters.o::LParameters.h Genotype.h
-main.o::LParameters.h Genotype.h
-test-des.o::LParameters.h Genotype.h
+XXS = $(SOURCES:.cpp=.P)
+PFILES = $(PXXS:.c=.P)
+-include $(PFILES)
+

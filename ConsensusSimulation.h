@@ -7,12 +7,13 @@
 #include "Site.h"
 #include "Node.h"
 
-class LSimulation : public Simulation
+class ConsensusSimulation : public Simulation
 {
 public:
   void createNode(void);
   void populateSite(Site *);
-  bool finished();
+  //void doSimulation(double endtime);
+  //bool finished();
 };
 
-#endif LOCAL_SIMULATION_H
+#endif //LOCAL_SIMULATION_H
