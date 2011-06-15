@@ -62,10 +62,10 @@ unsigned int BitString::hammingDistance(const BitString&other) const
   for ( unsigned i = 0; i < nBlocks; i++ )
   {
 #if USE_EXTRA_BITS
-    distance += hammingDistance( genome[i].extraBits, other.genome[i].extraBits );
+    distance += ::hammingDistance( genome[i].extraBits, other.genome[i].extraBits );
 #endif
     for ( int j = 0; j < (int)wordsPerBlock; j++ )
-      distance += hammingDistance(genome[i].words[j], other.genome[i].words[j]);
+      distance += ::hammingDistance(genome[i].words[j], other.genome[i].words[j]);
   }
   return distance;
 }
