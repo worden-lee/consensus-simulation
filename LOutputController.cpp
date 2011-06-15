@@ -8,6 +8,8 @@ void LOutputController::recordCommunity(void)
   bool yes = false;
   ofstream lsd;
 
+  log( "Proposal on table is %s\n",
+       ((Collective *)(site->community))->currentProposal.hexString() );
   if ( BitString::blockSize * BitString::nBlocks <= 6 )
   {
     Collective *cv = (Collective *)site->community;

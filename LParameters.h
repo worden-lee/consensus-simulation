@@ -27,21 +27,23 @@ extern LParameters &lparameters;
 #define NBLOCKS    1
 #endif
 #ifndef BLOCKSIZE
-#define BLOCKSIZE  3
+#define BLOCKSIZE  16
 #endif
 
 class LParameters : public Parameters
 {
 public:
   // number of Individuals
-  DECLARE_PARAM(int, groupSize);
+  DECLARE_PARAM(int, groupSize)
 
   // params for BlockFitnessLandscape
-  DECLARE_PARAM(string, hashKey);
-  DECLARE_PARAM(int, nBlocks);
-  DECLARE_PARAM(int, blockSize);
+  DECLARE_PARAM(string, hashKey)
+  DECLARE_PARAM(int, nBlocks)
+  DECLARE_PARAM(int, blockSize)
 
-  DECLARE_PARAM(bool, runDot);  
+  DECLARE_PARAM(string, experiment)
+
+  DECLARE_PARAM(bool, runDot)
   
   LParameters() { }
 };

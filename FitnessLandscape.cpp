@@ -8,8 +8,8 @@ bool FitnessLandscape::isLocalPeak(const BitString &x) const
 {
   double kx = fitness(x);
   BitString y;
-  for (int j = 0; j < BitString::nBlocks; j++)
-    for (int k = 0; k < BitString::blockSize; k++)
+  for (unsigned j = 0; j < BitString::nBlocks; j++)
+    for (unsigned k = 0; k < BitString::blockSize; k++)
     {
       x.mutate(&y,j,k);
       if (fitness(y) >= kx)  // what to do if one is == ?
@@ -26,7 +26,6 @@ void FitnessLandscape::drawLandscapeGraph(ostream &os)
   BitString g1;
   os << "graph \"ls-" << BitString::nBlocks
      << 'x' << BitString::blockSize << "\" {\n"
-    //     << "  page=\"8.5,11\";\n  ratio=auto;\n  ordering=out;\n";
      << "  page=\"8.5,11\";\n  rotate=90;\n  size=\"10,7.5\";\n"
      << "  ratio=fill;\n  ordering=out;\n";
   do
@@ -38,8 +37,8 @@ void FitnessLandscape::drawLandscapeGraph(ostream &os)
   }  while ( g != 0 );
   do
   { // second all edges
-    for (int j = 0; j < BitString::nBlocks; j++)
-      for (int k = 0; k < BitString::blockSize; k++)
+    for (unsigned j = 0; j < BitString::nBlocks; j++)
+      for (unsigned k = 0; k < BitString::blockSize; k++)
       {
 	g.mutate(&g1,j,k);
 	if ( g < g1 )
@@ -119,7 +118,8 @@ double expFitnessLandscape::fitness(const BitString &gen) const
 /* BlockFitnessLandscape produces uncorrelated fitness function for each
    block by using DES encryption
 */
-BlockFitnessLandscape::BlockFitnessLandscape(double water) : waterline(water)
+BlockFitnessLandscape::BlockFitnessLandscape(string s, double water)
+  : seed(s), waterline(water)
 {}
 
 /* returns fitness from 0 to maxFecundity for each block
@@ -143,8 +143,8 @@ double BlockFitnessLandscape::blockFitness(int *block, int blockno) const
   unsigned int cksum = cksump[0] ^ cksump[1];
 #endif
   string hash_string =
-    string(lparameters.hashKey()).append(string(1, (char)blockno))
-      .append((char *)block, (BitString::blockSize+7)/8);
+    seed + char('1' + blockno)
+      + string((char *)block, (BitString::blockSize+7)/8);
   unsigned char *hash = SHA1((const unsigned char*)hash_string.c_str(), 
       hash_string.length(), NULL);
   unsigned int *hash_ints_begin = (unsigned int *)hash;
@@ -160,7 +160,7 @@ double BlockFitnessLandscape::blockFitness(int *block, int blockno) const
 double BlockFitnessLandscape::fitness(const BitString&x) const
 {
   double fitness = 0;
-  for ( int i = 0; i < BitString::nBlocks; i++ )
+  for ( unsigned i = 0; i < BitString::nBlocks; i++ )
     fitness += blockFitness((int*)&x.genome[i], i);
   fitness /= BitString::nBlocks;
   return fitness - waterline;
@@ -247,7 +247,7 @@ double MurrayFitnessLandscape::fitness(const BitString &x,
     return 1;
   else if (distance <= lparameters.max_distance())
   {  // feasible only if all the set bits are in the first feasible_n bits
-    int feas = lparameters.feasible_n()[distance];
+    unsigned feas = lparameters.feasible_n()[distance];
     int word = 0; // assume 1 block here
 
     // skip any words that are all feasible

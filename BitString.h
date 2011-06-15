@@ -45,10 +45,10 @@ class BitString
 {
 public:
   // class stuff
-  const static int nBlocks = NBLOCKS, blockSize = BLOCKSIZE;
-  const static int wordsPerBlock = WORDS_PER_BLOCK;
-  const static int bitsPerWord = BITS_PER_WORD;
-  const static int nExtraBits = N_EXTRA_BITS;
+  const static unsigned int nBlocks = NBLOCKS, blockSize = BLOCKSIZE;
+  const static unsigned int wordsPerBlock = WORDS_PER_BLOCK;
+  const static unsigned int bitsPerWord = BITS_PER_WORD;
+  const static unsigned int nExtraBits = N_EXTRA_BITS;
   typedef struct block_str
   { BLOCK_WORD_TYPE words[WORDS_PER_BLOCK]; 
 #if USE_EXTRA_BITS
@@ -70,10 +70,10 @@ public:
   // create a mutation of *this at random
   BitString *mutate(void) const;
   // create a mutation at block 'bl', bit 'bi'
-  BitString *mutate(int bl, int bi) const;
+  BitString *mutate(unsigned bl, unsigned bi) const;
   // store a mutation of *this in *destination
   void mutate(BitString *destination) const;
-  void mutate(BitString *destination, int bl, int bi) const;
+  void mutate(BitString *destination, unsigned bl, unsigned bi) const;
 
   void randomize(void);
 

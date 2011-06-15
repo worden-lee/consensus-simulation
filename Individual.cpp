@@ -5,10 +5,21 @@
  * and can propose alternatives to any proposal.
  */
 #include "Individual.h"
+#include "rand.h"
 
 Individual::Individual()
-  : fitnesslandscape(0.5)
-{}
+  : fitnesslandscape(lparameters.hashKey() + ' ' + individual_seed(), 0.5)
+{ cout << "New individual, seed = " << fitnesslandscape.seed << endl;
+}
+
+const char *Individual::individual_seed(void)
+{ //static const unsigned int nchars = sizeof(unsigned int) / sizeof(char);
+  static char buf[3];
+  buf[0] = (unsigned char)(' ' + rand_index(80));
+  buf[1] = (unsigned char)(' ' + rand_index(80));
+  buf[2] = '\0';
+  return &buf[0];
+}
 
 double Individual::evaluate(const BitString &proposal)
 { return fitnesslandscape.fitness(proposal);
@@ -19,8 +30,8 @@ BitString Individual::makeProposal(const BitString &proposal)
   do
   { curr = nxt;
     double nfitness = evaluate(nxt);
-    for (int i = 0; i < BitString::nBlocks; ++i)
-      for (int j = 0; j < BitString::blockSize; ++j)
+    for (unsigned i = 0; i < BitString::nBlocks; ++i)
+      for (unsigned j = 0; j < BitString::blockSize; ++j)
       { BitString poss;
         curr.mutate(&poss, i, j);
         double pfitness = evaluate(poss);

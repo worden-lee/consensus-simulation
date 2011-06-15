@@ -22,17 +22,21 @@ Collective::~Collective()
 }
 
 void Collective::initialize(void)
-{ _nSpecies = nX = 1;
+{ _nSpecies = nX = lparameters.groupSize();
   finished = false;
   checkAllocation();
-  alive[0] = true;
+  fill(_alive.begin(), _alive.end(), true);
   currentProposal = BitString::wildType(); // a.k.a. 0.
 }
 
 void Collective::checkAllocation(void)
 { Community::checkAllocation();
-  if (alive.size() != individuals.size())
-    individuals.resize(alive.size());
+  unsigned as = alive.size();
+  if (as < individuals.size())
+    individuals.resize(as);
+  else while (individuals.size() < as)
+    // do this strangely to make sure none of them are duplicates
+    individuals.resize(individuals.size() + 1);
 }
 
 bool Collective::isVariableInUse(const Index &n)
@@ -44,6 +48,9 @@ void Collective::calcNextState(double t,
 { SiteOutputController *oc = site->outputcontroller;
   oc->log( "at time t, seeking consensus on proposal %s\n", 
                                currentProposal.hexString() );
+  for (int i = 0; i < nX; ++i)
+    oc->log( "Individual %d values %s at %g\n", i, currentProposal.hexString(),
+             individuals[i].evaluate(currentProposal) );
   vector<BitString> amendments(nX);
   vector< set<unsigned> > blocks(nX);
   copyTo(x, nx);
@@ -52,11 +59,17 @@ void Collective::calcNextState(double t,
     amendments[i] = individuals[i].makeProposal(currentProposal);
     if (amendments[i] != currentProposal)
     { oc->log( "Individual %d proposes %s\n", i, amendments[i].hexString() );
+      oc->log( "Individual %d values %s at %g\n", i, amendments[i].hexString(),
+             individuals[i].evaluate(amendments[i]) );
       // is the new proposal acceptable to everyone (or to anyone)?
       for (int j = 0; j < nX; ++j)
-        if (j != i && individuals[j].isAnImprovement(amendments[i], currentProposal) < 0)
-        { oc->log( "Individual %d blocks %s\n", i, amendments[i].hexString() );
-          blocks[i].insert(j);
+        if (j != i)
+        { oc->log( "Individual %d values %s at %g\n", j, amendments[i].hexString(),
+             individuals[j].evaluate(amendments[i]) );
+          if ( ! individuals[j].isAnImprovement(amendments[i], currentProposal) )
+          { oc->log( "Individual %d blocks %s\n", j, amendments[i].hexString() );
+            blocks[i].insert(j);
+          }
         }
     }
     else
@@ -66,8 +79,10 @@ void Collective::calcNextState(double t,
   finished = true;
   for (int i = 0; i < nX; ++i)
     if (blocks[i].size() == 0 && amendments[i] != currentProposal)
-    { oc->log( "proposal %s gets no objections\n", amendments[i].hexString() );
+    { oc->log( "Proposal %s has no objections\n", amendments[i].hexString() );
+      // FIXME: we can't just take the first one each time
       currentProposal = amendments[i];
       finished = false;
+      break;
     }
 }

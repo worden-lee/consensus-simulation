@@ -82,7 +82,7 @@ ALLOBJS = *.o
 
 FLOTSAM = core test-des *.idb *.pdb *.exe *.ilk *.obj *~ *\# #out/*
 
-XXS = $(SOURCES:.cpp=.P)
+PXXS = $(SOURCES:.cpp=.P)
 PFILES = $(PXXS:.c=.P)
 -include $(PFILES)
 

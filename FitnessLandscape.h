@@ -2,11 +2,11 @@
 #ifndef FITNESS_LANDSCAPE_H
 #define FITNESS_LANDSCAPE_H
 
+#include "BitString.h"
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
-#include "BitString.h"
-class Collective;
+#include <string>
 
 class FitnessLandscape
 {
@@ -39,8 +39,9 @@ public:
 class BlockFitnessLandscape : public FitnessLandscape
 {
 public:
-  BlockFitnessLandscape(double water=0);
+  string seed;
   double waterline;
+  BlockFitnessLandscape(string s, double water=0);
   double blockFitness(int *blockp, int blockno) const;
   virtual double fitness(const BitString&x) const;
 };
