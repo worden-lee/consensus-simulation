@@ -27,7 +27,7 @@ extern LParameters &lparameters;
 #define NBLOCKS    1
 #endif
 #ifndef BLOCKSIZE
-#define BLOCKSIZE  5
+#define BLOCKSIZE  8
 #endif
 
 class LParameters : public Parameters

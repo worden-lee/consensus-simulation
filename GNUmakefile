@@ -3,8 +3,9 @@ MPI=no
 
 CFLAGS= -Wall -g -I$(LIBDIR) -I$(LIBDIR)/Displays $(OTHERCFLAGS) # -O3
 #CFLAGS=-Wall -g -O3
-LDFLAGS = -L$(LIBDIR) -l$(LIBNAME) -L../vxl/lib -lvnl_algo -lvnl -lvcl -lnetlib -lssl -lm -lstdc++
+LDFLAGS = -L$(LIBDIR) -l$(LIBNAME) -L$(VXLDIR)/lib -lvnl_algo -lvnl -lvcl -lnetlib -lssl -lm -lstdc++
 #OTHER_CFLAGS = -I$(LIBDIR)
+VXLDIR ?= ../vxl
 
 SOURCES = Collective.cpp FitnessLandscape.cpp Individual.cpp \
 	BitString.cpp LParameters.cpp ConsensusSimulation.cpp LOutputController.cpp

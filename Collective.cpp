@@ -46,8 +46,8 @@ bool Collective::isVariableInUse(const Index &n)
 void Collective::calcNextState(double t,
                                const VectorAccess<double>*x, VectorAccess<double>*nx)
 { SiteOutputController *oc = site->outputcontroller;
-  oc->log( "at time t, seeking consensus on proposal %s\n", 
-                               currentProposal.hexString() );
+  oc->log( "at time %g, seeking consensus on proposal %s\n", 
+                               t, currentProposal.hexString() );
   for (int i = 0; i < nX; ++i)
     oc->log( "Individual %d values %s at %g\n", i, currentProposal.hexString(),
              individuals[i].evaluate(currentProposal) );
