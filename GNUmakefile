@@ -13,7 +13,7 @@ OBJS = $(SOURCES:.cpp=.o)
 
 EXE = consensus
 LIBNAME = adap-dyn
-LIBDIR = ../adap-dyn
+LIBDIR ?= ../adap-dyn
 LIBSTEM = lib$(LIBNAME).a
 LIB = $(LIBDIR)/$(LIBSTEM)
 
