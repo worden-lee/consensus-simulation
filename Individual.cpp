@@ -30,8 +30,8 @@ BitString Individual::makeProposal(const BitString &proposal)
   do
   { curr = nxt;
     double nfitness = evaluate(nxt);
-    for (unsigned i = 0; i < BitString::nBlocks; ++i)
-      for (unsigned j = 0; j < BitString::blockSize; ++j)
+    for (unsigned i = 0; i < proposal.nBlocks; ++i)
+      for (unsigned j = 0; j < proposal.blockSize; ++j)
       { BitString poss;
         curr.mutate(&poss, i, j);
         double pfitness = evaluate(poss);

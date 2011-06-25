@@ -10,7 +10,7 @@ void LOutputController::recordCommunity(void)
 
   log( "Proposal on table is %s\n",
        ((Collective *)(site->community))->currentProposal.hexString() );
-  if ( BitString::blockSize * BitString::nBlocks <= 6 )
+  if ( lparameters.blockSize() * lparameters.nBlocks() <= 6 )
   {
     Collective *cv = (Collective *)site->community;
     for (int i = 0; (unsigned)i < cv->individuals.size(); ++i )

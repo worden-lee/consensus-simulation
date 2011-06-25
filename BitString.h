@@ -2,8 +2,8 @@
 #define BITSTRING_H
 
 #include "LParameters.h"
-#include <limits.h>
 #include <fstream>
+#include <limits.h>
 
 /*
  * BitString class embodies a list of equal-size blocks of bits
@@ -32,38 +32,34 @@
 #  error BitString.h has to be rewritten for different size int!
 #endif
 
-#define WORDS_PER_BLOCK (BLOCKSIZE / BITS_PER_WORD)
-#define N_EXTRA_BITS (BLOCKSIZE - WORDS_PER_BLOCK * BITS_PER_WORD)
-
-#if N_EXTRA_BITS > 0
-#  define USE_EXTRA_BITS 1
-#else
-#  define USE_EXTRA_BITS 0
-#endif
-
 class BitString
 {
 public:
-  // class stuff
-  const static unsigned int nBlocks = NBLOCKS, blockSize = BLOCKSIZE;
-  const static unsigned int wordsPerBlock = WORDS_PER_BLOCK;
-  const static unsigned int bitsPerWord = BITS_PER_WORD;
-  const static unsigned int nExtraBits = N_EXTRA_BITS;
-  typedef struct block_str
-  { BLOCK_WORD_TYPE words[WORDS_PER_BLOCK]; 
-#if USE_EXTRA_BITS
-    BLOCK_WORD_TYPE extraBits:N_EXTRA_BITS;
-#endif
-  } block;
-
-  // instance stuff
-  block genome[NBLOCKS];
+  unsigned int nBlocks, blockSize;
+  BLOCK_WORD_TYPE **blocks;
 
   // functions
-  BitString(void);
+    // default constructor initializes to zero bits
+  BitString();
+    // nontrivial constructor initializes all bits to zero
+  BitString(unsigned int nbl, unsigned int bls);
+    // copy constructor copies
+  BitString(const BitString&other);
     // arguments must be ((wordsPerBlock + (useExtraBits?1:0)) * nBlocks)
     //  number of BLOCK_WORD_TYPEs
-  BitString(BLOCK_WORD_TYPE b0, ...);
+  //BitString(BLOCK_WORD_TYPE b0, ...);
+  ~BitString();
+
+  BitString &operator=(const BitString &other);
+
+  inline unsigned int wordsPerBlock(void) const
+  { return blockSize / BITS_PER_WORD; }
+  inline unsigned int nExtraBits(void) const
+  { return blockSize - (wordsPerBlock() * BITS_PER_WORD); }
+  inline bool useExtraBits(void) const
+  { return nExtraBits() > 0; }
+  inline unsigned int totalWordsPerBlock(void) const
+  { return wordsPerBlock() + (useExtraBits() ? 1 : 0); }
 
   unsigned int hammingDistance(const BitString&) const;
 
@@ -77,7 +73,7 @@ public:
 
   void randomize(void);
 
-  static BitString &wildType(void);
+  static const BitString &wildType(unsigned int nbl, unsigned int bls);
 
   BitString &operator++(void);
 

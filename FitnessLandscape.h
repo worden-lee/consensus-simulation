@@ -22,8 +22,8 @@ public:
   virtual void drawLandscapeGraph(std::ostream &os)
     const;
   // draw the part of the hypercube that is occupied
-  virtual void drawQuasispeciesGraph(std::ostream &os)
-    const;
+  //virtual void drawQuasispeciesGraph(std::ostream &os)
+  //  const;
 protected:
   virtual void writeLabel(const BitString &s, std::ostream &os) const;
 };
@@ -42,7 +42,7 @@ public:
   string seed;
   double waterline;
   BlockFitnessLandscape(string s, double water=0);
-  double blockFitness(int *blockp, int blockno) const;
+  double blockFitness(const BitString &x, int blockno) const;
   virtual double fitness(const BitString&x) const;
 };
 

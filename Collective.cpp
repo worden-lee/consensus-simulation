@@ -26,7 +26,8 @@ void Collective::initialize(void)
   finished = false;
   checkAllocation();
   fill(_alive.begin(), _alive.end(), true);
-  currentProposal = BitString::wildType(); // a.k.a. 0.
+  currentProposal = BitString::wildType(
+      lparameters.nBlocks(), lparameters.blockSize()); // a.k.a. 0.
 }
 
 void Collective::checkAllocation(void)
@@ -43,8 +44,8 @@ bool Collective::isVariableInUse(const Index &n)
 { return !finished; //true;
 }
 
-void Collective::calcNextState(double t,
-                               const VectorAccess<double>*x, VectorAccess<double>*nx)
+void Collective::calcNextState(double t, const VectorAccess<double>*x,
+                               VectorAccess<double>*nx)
 { SiteOutputController *oc = site->outputcontroller;
   oc->log( "at time %g, seeking consensus on proposal %s\n", 
                                t, currentProposal.hexString() );

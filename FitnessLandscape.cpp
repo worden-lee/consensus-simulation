@@ -8,10 +8,9 @@ bool FitnessLandscape::isLocalPeak(const BitString &x) const
 {
   double kx = fitness(x);
   BitString y;
-  for (unsigned j = 0; j < BitString::nBlocks; j++)
-    for (unsigned k = 0; k < BitString::blockSize; k++)
-    {
-      x.mutate(&y,j,k);
+  for (unsigned j = 0; j < x.nBlocks; j++)
+    for (unsigned k = 0; k < x.blockSize; k++)
+    { x.mutate(&y,j,k);
       if (fitness(y) >= kx)  // what to do if one is == ?
         return false;
     }
@@ -22,10 +21,10 @@ void FitnessLandscape::drawLandscapeGraph(ostream &os)
   const
 {
   // you will want to use something like 'dot -Tps -ols-1-6.ps' on this file
-  BitString g = BitString::wildType();
-  BitString g1;
-  os << "graph \"ls-" << BitString::nBlocks
-     << 'x' << BitString::blockSize << "\" {\n"
+  BitString wt = BitString::wildType(lparameters.nBlocks(), lparameters.blockSize());
+  BitString g = wt, g1;
+  os << "graph \"ls-" << g.nBlocks
+     << 'x' << g.blockSize << "\" {\n"
      << "  page=\"8.5,11\";\n  rotate=90;\n  size=\"10,7.5\";\n"
      << "  ratio=fill;\n  ordering=out;\n";
   do
@@ -34,24 +33,24 @@ void FitnessLandscape::drawLandscapeGraph(ostream &os)
     os << "  \"" << g << "\" [label = \"" << g << ": " << f
 	     << "\"];\n";
     ++g;
-  }  while ( g != 0 );
+  }  while ( g != wt );
   do
   { // second all edges
-    for (unsigned j = 0; j < BitString::nBlocks; j++)
-      for (unsigned k = 0; k < BitString::blockSize; k++)
-      {
-	g.mutate(&g1,j,k);
-	if ( g < g1 )
-	  os << "  \"" << g << "\" -- \"" << g1 << "\";\n";
+    for (unsigned j = 0; j < g.nBlocks; j++)
+      for (unsigned k = 0; k < g.blockSize; k++)
+      { g.mutate(&g1,j,k);
+        if ( g < g1 )
+          os << "  \"" << g << "\" -- \"" << g1 << "\";\n";
       }
     ++g;
-  }  while ( g != 0 );
+  }  while ( g != wt );
   os << "}\n";
 }
 
+#if 0
 void FitnessLandscape::drawQuasispeciesGraph(ostream &os) 
   const
-{
+{ //FIXME
   // you will want to use something like 'dot -Tps -ols-1-6.ps' on this file
   os << "graph \""
      << BitString::nBlocks << " block" << (BitString::nBlocks==1?"":"s") << ", "
@@ -98,21 +97,12 @@ void FitnessLandscape::drawQuasispeciesGraph(ostream &os)
 #endif
   os << "}\n";
 }
- 
+#endif 
+
 void FitnessLandscape::writeLabel(const BitString &s,
 				  ostream &os) const
-{
-  double f = fitness(s);
+{ double f = fitness(s);
   os << "\" " << s << "\\n " << f << "\"";
-}
-
-BitString &expFitnessLandscape::refBitString = BitString::wildType();
-
-double expFitnessLandscape::fitness(const BitString &gen) const
-{
-  const double lambda = 1;
-  int dist = refBitString.hammingDistance(gen);
-  return exp(- lambda * dist);
 }
 
 /* BlockFitnessLandscape produces uncorrelated fitness function for each
@@ -127,7 +117,7 @@ BlockFitnessLandscape::BlockFitnessLandscape(string s, double water)
 */
 #include <openssl/sha.h>
 #include <numeric>
-double BlockFitnessLandscape::blockFitness(int *block, int blockno) const
+double BlockFitnessLandscape::blockFitness(const BitString &x, int blockno) const
 {
 #if 0
   des_cblock outblock;
@@ -144,7 +134,8 @@ double BlockFitnessLandscape::blockFitness(int *block, int blockno) const
 #endif
   string hash_string =
     seed + char('1' + blockno)
-      + string((char *)block, (BitString::blockSize+7)/8);
+      + string((char *)(x.blocks[blockno]), 
+               x.totalWordsPerBlock()*BITS_PER_WORD/8);
   unsigned char *hash = SHA1((const unsigned char*)hash_string.c_str(), 
       hash_string.length(), NULL);
   unsigned int *hash_ints_begin = (unsigned int *)hash;
@@ -160,9 +151,9 @@ double BlockFitnessLandscape::blockFitness(int *block, int blockno) const
 double BlockFitnessLandscape::fitness(const BitString&x) const
 {
   double fitness = 0;
-  for ( unsigned i = 0; i < BitString::nBlocks; i++ )
-    fitness += blockFitness((int*)&x.genome[i], i);
-  fitness /= BitString::nBlocks;
+  for ( unsigned i = 0; i < x.nBlocks; i++ )
+    fitness += blockFitness(x, i);
+  fitness /= x.nBlocks;
   return fitness - waterline;
 }
 
@@ -173,6 +164,7 @@ double BlockFitnessLandscape::fitness(const BitString&x) const
 // fitnesses are distorted by drugs
 //   1-mutations 2 .. 10 multiplied by 0.95 .. 1.03
 //   2-mutation (1,12) by 1.03
+#if 0
 #if 1
 //assumes genotype is defined as 1 block
 double MurrayFitnessLandscape::fitness(const BitString &x) const
@@ -295,12 +287,13 @@ double MurrayFitnessLandscape::fitness(const BitString &x,
     return 0;
 }
 #endif //0
+#endif
 
 // assumes 1 block of 1 word
 double SinglePeakFitnessLandscape::fitness(const BitString &x)
   const
 {
-  switch ( x.genome[0].words[0] )
+  switch ( x.blocks[0][0] )
   {
   case 0:
     //  case 1: // for double peak
