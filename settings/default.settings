@@ -4,6 +4,11 @@ hashKey There is a rose in Spanish Harlem
 nBlocks 1
 blockSize 4
 
+individualProposalStrategy best
+facilitationStrategy each proposes one
+// -1 means make the number from the number of bits
+maxNumberOfProposalFailures -1
+
 runDot true//false
 
 // override values from Parameters class

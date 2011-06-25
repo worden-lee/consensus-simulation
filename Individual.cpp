@@ -26,22 +26,54 @@ double Individual::evaluate(const BitString &proposal)
 }
 
 BitString Individual::makeProposal(const BitString &proposal)
-{ BitString curr = proposal, nxt = proposal;
-  do
-  { curr = nxt;
-    double nfitness = evaluate(nxt);
+{ string strat = lparameters.individualProposalStrategy();
+  cout << "individual strategy is '" << strat << "'" << endl;
+  if (strat == "best")
+  { BitString curr = proposal, nxt = proposal;
+    do
+    { curr = nxt;
+      double nfitness = evaluate(nxt);
+      for (unsigned i = 0; i < proposal.nBlocks; ++i)
+        for (unsigned j = 0; j < proposal.blockSize; ++j)
+        { BitString poss;
+          curr.mutate(&poss, i, j);
+          double pfitness = evaluate(poss);
+          if (pfitness >= nfitness)
+          { nxt = poss;
+            nfitness = pfitness;
+          }
+        }
+    } while (nxt != curr);
+    return curr;
+  }
+  else if (strat == "best neighbor")
+  { BitString curr = proposal;
+    double cfit = evaluate(proposal);
     for (unsigned i = 0; i < proposal.nBlocks; ++i)
       for (unsigned j = 0; j < proposal.blockSize; ++j)
       { BitString poss;
-        curr.mutate(&poss, i, j);
-        double pfitness = evaluate(poss);
-        if (pfitness >= nfitness)
-        { nxt = poss;
-          nfitness = pfitness;
+        proposal.mutate(&poss, i, j);
+        double pfit = evaluate(poss);
+        if (pfit > cfit)
+        { cfit = pfit;
+          curr = poss;
         }
       }
-  } while (nxt != curr);
-  return curr;
+    return curr;
+  }
+  else if (strat == "any improvement")
+  { BitString poss;
+    double cfit = evaluate(proposal);
+    for (unsigned i = 0; i < proposal.nBits(); ++i)
+    { unsigned ii = rand_index(proposal.nBits());
+      proposal.mutate(&poss, ii);
+      if (evaluate(poss) > cfit)
+        return poss;
+    }
+    return proposal;
+  }
+  cout << "individual strategy '" << strat << "' not known" << endl;
+  return proposal;
 }
 
 // return yes if the new proposal is better than the old one, not whether

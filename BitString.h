@@ -61,6 +61,9 @@ public:
   inline unsigned int totalWordsPerBlock(void) const
   { return wordsPerBlock() + (useExtraBits() ? 1 : 0); }
 
+  inline unsigned int nBits(void) const
+  { return blockSize * nBlocks; }
+
   unsigned int hammingDistance(const BitString&) const;
 
   // create a mutation of *this at random
@@ -70,6 +73,7 @@ public:
   // store a mutation of *this in *destination
   void mutate(BitString *destination) const;
   void mutate(BitString *destination, unsigned bl, unsigned bi) const;
+  void mutate(BitString *destination, unsigned bi) const;
 
   void randomize(void);
 

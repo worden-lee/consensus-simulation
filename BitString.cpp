@@ -30,7 +30,7 @@ BitString::BitString(const BitString&other) :
 
 BitString &BitString::operator=(const BitString &other)
 { if (blocks != 0 && (other.nBlocks != nBlocks || other.blockSize != blockSize))
-  { for (int i = 0; i < nBlocks; ++i)
+  { for (unsigned i = 0; i < nBlocks; ++i)
       delete blocks[i];
     delete blocks;
   }
@@ -109,6 +109,11 @@ void BitString::mutate(BitString *mutant, unsigned mbl, unsigned mbi) const
   unsigned mi = mbi / BITS_PER_WORD;
   mbi -= (mi * BITS_PER_WORD);
   mutant->blocks[mbl][mi]  ^= 1U << mbi;
+}
+
+void BitString::mutate(BitString *mutant, unsigned mb) const
+{ unsigned block = mb / blockSize;
+  mutate(mutant, block, mb - block * blockSize);
 }
 
 void BitString::randomize(void)

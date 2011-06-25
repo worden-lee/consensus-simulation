@@ -26,6 +26,8 @@ public:
   void initialize(void);
   bool isVariableInUse(const Index &);
   void calcNextState(double, const VectorAccess<double> *, VectorAccess<double>*);
+protected:
+  int n_failures;
 };
 
 #endif //LOCAL_COMMUNITY_H

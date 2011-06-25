@@ -41,7 +41,10 @@ public:
   DECLARE_PARAM(int, nBlocks)
   DECLARE_PARAM(int, blockSize)
 
-  DECLARE_PARAM(string, experiment)
+  DECLARE_PARAM(string, individualProposalStrategy)
+  DECLARE_PARAM(string, facilitationStrategy)
+
+  DECLARE_PARAM(int, maxNumberOfProposalFailures)
 
   DECLARE_PARAM(bool, runDot)
   

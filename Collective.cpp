@@ -13,7 +13,7 @@
 #include "rand.h"
 #include "util.h"
 
-Collective::Collective(void)
+Collective::Collective(void) : n_failures(0)
 {
 }
 
@@ -49,41 +49,91 @@ void Collective::calcNextState(double t, const VectorAccess<double>*x,
 { SiteOutputController *oc = site->outputcontroller;
   oc->log( "at time %g, seeking consensus on proposal %s\n", 
                                t, currentProposal.hexString() );
+  string strat = lparameters.facilitationStrategy();
+  oc->log("facilitation strategy is '%s'\n", strat.c_str());
   for (int i = 0; i < nX; ++i)
     oc->log( "Individual %d values %s at %g\n", i, currentProposal.hexString(),
              individuals[i].evaluate(currentProposal) );
-  vector<BitString> amendments(nX);
-  vector< set<unsigned> > blocks(nX);
-  copyTo(x, nx);
-  for (int i = 0; i < nX; ++i)
-  { // ask each individual to make proposed improvements
-    amendments[i] = individuals[i].makeProposal(currentProposal);
-    if (amendments[i] != currentProposal)
-    { oc->log( "Individual %d proposes %s\n", i, amendments[i].hexString() );
-      oc->log( "Individual %d values %s at %g\n", i, amendments[i].hexString(),
-             individuals[i].evaluate(amendments[i]) );
-      // is the new proposal acceptable to everyone (or to anyone)?
-      for (int j = 0; j < nX; ++j)
-        if (j != i)
-        { oc->log( "Individual %d values %s at %g\n", j, amendments[i].hexString(),
-             individuals[j].evaluate(amendments[i]) );
-          if ( ! individuals[j].isAnImprovement(amendments[i], currentProposal) )
-          { oc->log( "Individual %d blocks %s\n", j, amendments[i].hexString() );
-            blocks[i].insert(j);
+  if (strat == "each proposes one")
+  { vector<BitString> amendments(nX);
+    vector< set<unsigned> > blocks(nX);
+    copyTo(x, nx);
+    for (int i = 0; i < nX; ++i)
+    { // ask each individual to make proposed improvements
+      amendments[i] = individuals[i].makeProposal(currentProposal);
+      if (amendments[i] != currentProposal)
+      { oc->log( "Individual %d proposes %s\n", i, amendments[i].hexString() );
+        oc->log( "Individual %d values %s at %g\n", i, amendments[i].hexString(),
+               individuals[i].evaluate(amendments[i]) );
+        // is the new proposal acceptable to everyone (or to anyone)?
+        for (int j = 0; j < nX; ++j)
+          if (j != i)
+          { oc->log( "Individual %d values %s at %g\n", j, amendments[i].hexString(),
+               individuals[j].evaluate(amendments[i]) );
+            if ( ! individuals[j].isAnImprovement(amendments[i], currentProposal) )
+            { oc->log( "Individual %d blocks %s\n", j, amendments[i].hexString() );
+              blocks[i].insert(j);
+            }
           }
-        }
+      }
+      else
+      oc->log( "Individual %d has no proposal\n", i );
+    }
+    // any proposals get no blocks?
+    finished = true;
+    for (int i = 0; i < nX; ++i)
+      if (blocks[i].size() == 0 && amendments[i] != currentProposal)
+      { oc->log( "Proposal %s has no objections\n", amendments[i].hexString() );
+        // FIXME: we can't just take the first one each time
+        currentProposal = amendments[i];
+        finished = false;
+        break;
+      }
+  }
+  else if (strat == "one proposal at a time")
+  { unsigned ind = rand_index(individuals.size());
+    finished = false;
+    BitString newProposal = individuals[ind].makeProposal(currentProposal);
+    int mnpf = lparameters.maxNumberOfProposalFailures();
+    if (mnpf == -1)
+      mnpf = 2*currentProposal.nBits();
+    if (newProposal == currentProposal)
+    { oc->log("Individual %d has no proposal\n", ind);
+      ++n_failures;
+      if (n_failures > mnpf)
+      { finished = true;
+      }
     }
     else
-      oc->log( "Individual %d has no proposal\n", i );
-  }
-  // any proposals get no blocks?
-  finished = true;
-  for (int i = 0; i < nX; ++i)
-    if (blocks[i].size() == 0 && amendments[i] != currentProposal)
-    { oc->log( "Proposal %s has no objections\n", amendments[i].hexString() );
-      // FIXME: we can't just take the first one each time
-      currentProposal = amendments[i];
-      finished = false;
-      break;
+    { oc->log("Individual %d proposes %s\n", ind, newProposal.hexString());
+      oc->log("Individual %d values %s at %g\n", ind, newProposal.hexString(),
+          individuals[ind].evaluate(newProposal));
+      bool accept = true;
+      for (unsigned judge = 0; judge < individuals.size(); ++judge)
+        if (judge != ind)
+        { oc->log("Individual %d values %s at %g\n", judge, 
+              newProposal.hexString(), individuals[judge].evaluate(newProposal));
+          if ( ! individuals[judge].isAnImprovement(newProposal, currentProposal) )
+          { oc->log("Individual %d blocks %s\n", judge, newProposal.hexString());
+            accept = false;
+            break;
+          }
+        }
+      if (accept)
+      { oc->log("Proposal %s is accepted\n", newProposal.hexString());
+        currentProposal = newProposal;
+      }
+      else
+      { oc->log("Proposal %s is rejected\n", newProposal.hexString());
+        ++n_failures;
+        if (n_failures > mnpf)
+        { finished = true;
+        }
+      }
     }
+  }
+  else
+  { oc->log("Unknown strategy!\n");
+    finished = true;
+  }
 }
