@@ -43,6 +43,7 @@ public:
 
   DECLARE_PARAM(string, individualProposalStrategy)
   DECLARE_PARAM(string, facilitationStrategy)
+  DECLARE_PARAM(string, blockStrategy)
 
   DECLARE_PARAM(int, maxNumberOfProposalFailures)
 

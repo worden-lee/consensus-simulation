@@ -12,7 +12,8 @@ public:
   const char *individual_seed(void);
   double evaluate(const BitString &proposal);
   BitString makeProposal(const BitString &proposal);
-  bool isAnImprovement(const BitString &proposal, const BitString &over);
+  bool acceptable(const BitString &proposal);
+  bool acceptableReplacement(const BitString &proposal, const BitString &over);
 };
 
 

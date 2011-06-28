@@ -70,7 +70,7 @@ void Collective::calcNextState(double t, const VectorAccess<double>*x,
           if (j != i)
           { oc->log( "Individual %d values %s at %g\n", j, amendments[i].hexString(),
                individuals[j].evaluate(amendments[i]) );
-            if ( ! individuals[j].isAnImprovement(amendments[i], currentProposal) )
+            if ( ! individuals[j].acceptableReplacement(amendments[i], currentProposal) )
             { oc->log( "Individual %d blocks %s\n", j, amendments[i].hexString() );
               blocks[i].insert(j);
             }
@@ -113,7 +113,7 @@ void Collective::calcNextState(double t, const VectorAccess<double>*x,
         if (judge != ind)
         { oc->log("Individual %d values %s at %g\n", judge, 
               newProposal.hexString(), individuals[judge].evaluate(newProposal));
-          if ( ! individuals[judge].isAnImprovement(newProposal, currentProposal) )
+          if ( ! individuals[judge].acceptableReplacement(newProposal, currentProposal) )
           { oc->log("Individual %d blocks %s\n", judge, newProposal.hexString());
             accept = false;
             break;

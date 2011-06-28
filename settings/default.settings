@@ -6,6 +6,8 @@ blockSize 4
 
 individualProposalStrategy best
 facilitationStrategy each proposes one
+blockStrategy if worse
+
 // -1 means make the number from the number of bits
 maxNumberOfProposalFailures -1
 

@@ -25,6 +25,10 @@ double Individual::evaluate(const BitString &proposal)
 { return fitnesslandscape.fitness(proposal);
 }
 
+bool Individual::acceptable(const BitString &proposal)
+{ return evaluate(proposal) >= 0;
+}
+
 BitString Individual::makeProposal(const BitString &proposal)
 { string strat = lparameters.individualProposalStrategy();
   cout << "individual strategy is '" << strat << "'" << endl;
@@ -76,9 +80,18 @@ BitString Individual::makeProposal(const BitString &proposal)
   return proposal;
 }
 
-// return yes if the new proposal is better than the old one, not whether
-// it's acceptable in absolute terms
-bool Individual::isAnImprovement( const BitString &proposal,
-                                  const BitString &over )
-{ return evaluate(proposal) >= evaluate(over);
+// return yes if willing to accept the new proposal in place of
+// the old one, not whether it's acceptable in absolute terms
+bool Individual::acceptableReplacement( const BitString &proposal,
+                                        const BitString &over )
+{ string bs = lparameters.blockStrategy();
+  cout << "block strategy is " << bs << endl;
+  if (bs == "if worse")
+    return evaluate(proposal) >= evaluate(over);
+  else if (bs == "if worse and not acceptable")
+    return acceptable(proposal) || evaluate(proposal) >= evaluate(over);
+  else
+  { cout << "unknown block strategy " << bs << endl;
+    return false;
+  }
 }
