@@ -28,6 +28,8 @@ sub usage_err {
 # package for mkpath
 use File::Path;
 
+use Tie::Handle::CSV;
+
 $[ = 0;
 
 # independent vars and how they loop
@@ -38,7 +40,8 @@ my $nreps = "";
 $intro = 0;
 
 # dependent vars
-#my @dependent_vars = ("equil", "eq_nsp", "ess", "ess_nsp", "ess_count", "final_T", "runtime");
+my @dependent_vars = ("n.individuals", "min.value", "mean.value", "max.value",
+  "n.satisfied");
 # indexes of equil, ess, final_ess in the above list
 #my @dep_vars_to_plot = (0, 2, 5);
 
@@ -86,7 +89,7 @@ while (@ARGV)
   elsif ($arg =~ /^-f$/)
   { push @settings, shift ARGV; }
   elsif ($arg =~ /^--compare=(.*)$/)
-  { push @independent_vars, '-f';
+  { push @independent_vars, 'include';
     push @independent_vars_values, [ split(/,/,$1) ];
   }
   elsif ($arg =~ /^--executable=(.*)$/)
@@ -95,7 +98,8 @@ while (@ARGV)
   { $arg = shift ARGV;
     if ($arg =~ /^(.*)=(.*)-(.*)-(.*)$/)
     { push @independent_vars, $1;
-      push @independent_vars_values, [ map { $2 + $3*$_ }, (0..(($4-$2)/$3)) ];
+      my @vals = map { $2 + $3*$_ } (0..(($4-$2)/$3));
+      push @independent_vars_values, [ @vals ];
     }
     elsif ($arg =~ /^(.*)=(.*)-(.*)$/)
     { push @independent_vars, $1;
@@ -103,7 +107,8 @@ while (@ARGV)
     }
     elsif ($arg =~ /^(.*)=(.*)$/)
     { push @independent_vars, $1;
-      push @independent_vars_values, [ split(/,/,$2) ];
+      my @vals = split(/,/,$2);
+      push @independent_vars_values, [ @vals ];
     }
     else
     { &usage_err(); }
@@ -126,8 +131,9 @@ while (@ARGV)
 for (@evals)
 { eval $_; }
 
-$dbg && print "experiment name is $exptname\n";
+#$dbg && print "experiment name is $exptname\n";
 
+if (0) {
 #
 # evaluate the experiment name
 #
@@ -143,144 +149,9 @@ if ($exptname eq "one") {
   @steps = (2, 1, 1, 2);  # number of steps, counting both min and max
 #  @steps = (3, 3, 5, 2);
   $includetxt .= "include experiments/$exptname.settings\n";
-} elsif ($exptname eq "two") {
-  # 3 resources, 2 species
-  @independent_vars = ("resources[0].heating", "resources[1].heating",
-	   "resources[2].heating",
-	   "species[0].tau", "species[1].tau" );
-  my $nr = 3;
-  my $nT = 3;
-  @mins =  (0, 0, 0, 0, 0);
-  @maxs =  (1, 1, 1, 100, 100);
-  @steps = ($nr, $nr, $nr, $nT, $nT);
-  $includetxt .= "include experiments/$exptname.settings\n";
-} elsif ($exptname eq "two-par") {
-  # 3 resources, 2 species
-  @independent_vars = ("resources[0].heating", "resources[1].heating",
-	   "resources[2].heating",
-	   "species[0].tau", "species[1].tau" );
-  my $nr = 1;			       #3; # counting both min and max
-  my $nT = 25;				#3;
-  @mins =  (0.5, 0, 1, 30, 30);
-  @maxs =  (0.5, 0, 1, 70, 70);
-  @steps = ($nr, $nr, $nr, $nT, $nT);
-  $includetxt .= "include experiments/$exptname.settings\n";
-} elsif ($exptname eq "small-random") {
-  if ($nreps eq "") {
-    $nreps = 10;
-  }
-  @independent_vars = ("sigma", "replicate");
-  @mins =  (1, 1);
-  @maxs =  (50, $nreps);
-  @steps = (3, $nreps);
-  $includetxt .= "include experiments/$exptname.settings\n";
-  $includetxt .= "include settings/network-growth.settings\n";
-} elsif ($exptname eq "large-random") {
-  if ($nreps eq "") {
-    $nreps = 10;
-  }
-  @independent_vars = ("sigma", "replicate");
-  @mins =  (1, 1);
-  @maxs =  (50, $nreps);
-  @steps = (3, $nreps);
-  $includetxt .= "include experiments/$exptname.settings\n";
-  $includetxt .= "include settings/network-evolution.settings\n";
-} elsif ($exptname eq "network-growth") {
-  if ($nreps eq "") {
-    $nreps = 10;
-  }
-  @independent_vars = ("sigma", "replicate");
-  @mins =  (1, 1);
-  @maxs =  (50, $nreps);
-  @steps = (3, $nreps);
-  $includetxt .= "include experiments/$exptname.settings\n";
-} elsif ($exptname eq "random-community") {
-  if ($nreps eq "") {
-    $nreps = 100;
-  }
-  @independent_vars = ("replicate", "randomSystemSize",
-		       "meanResource", "sigma");
-  @mins = (1, 10, 10, 10);
-  @maxs = ($nreps, 20, 20, 20);
-  @steps = ($nreps, 2, 2, 2);#8,6,6
-  $includetxt .= "include experiments/$exptname.settings\n";
-  $includetxt .= "include settings/network-evolution.settings\n";
-} elsif ($exptname eq "random-community-stunted") {
-  if ($nreps eq "") {
-    $nreps = 100;
-  }
-  @independent_vars = ("replicate", "randomSystemSize",
-		       "meanResource", "sigma");
-  @mins = (1, 10, 10, 10);
-  @maxs = ($nreps, 20, 20, 20);
-  @steps = ($nreps, 2, 2, 2);#8,6,6
-  $includetxt .= "include experiments/$exptname.settings\n";
-  $includetxt .= "include settings/stunted-evolution.settings\n";
-} elsif ($exptname eq "community-structures") {
-  if ($nreps eq "") {
-    $nreps = 100;
-  }
-  @independent_vars = ("replicate");
-  @mins = (1);
-  @maxs = ($nreps);
-  @steps = ($nreps);
-  $includetxt .= "include experiments/$exptname.settings\n";
-} elsif ($exptname eq "community-structures-angles") {
-  if ($nreps eq "") {
-    $nreps = 100;
-  }
-  @independent_vars = ("replicate");
-  @mins = (1);
-  @maxs = ($nreps);
-  @steps = ($nreps);
-  $includetxt .= "include experiments/community-structures.settings\n";
-  $includetxt .= "include settings/precise.settings\n";
-  $includetxt .= "mutateT0andgammaTogether true\n";
-  $includetxt .= "mutategamma true\n";
-} elsif ($exptname eq "community-structures-precise") {
-  if ($nreps eq "") {
-    $nreps = 100;
-  }
-  @independent_vars = ("replicate");
-  @mins = (1);
-  @maxs = ($nreps);
-  @steps = ($nreps);
-  $includetxt .= "include experiments/community-structures.settings\n";
-  $includetxt .= "include settings/precise.settings\n";
-#  $includetxt .= "doPowerRelations false\n";
-} elsif ($exptname eq "community-structures-narrow-precise") {
-  if ($nreps eq "") {
-    $nreps = 100;
-  }
-  @independent_vars = ("replicate");
-  @mins = (1);
-  @maxs = ($nreps);
-  @steps = ($nreps);
-  $includetxt .= "include experiments/community-structures.settings\n";
-  $includetxt .= "include settings/precise.settings\n";
-  $includetxt .= "sigma 5\n";
-  $includetxt .= "doPowerRelations false\n";
-} elsif ($exptname eq "fix-ess") {
-  if ($nreps eq "") {
-    $nreps = 100;
-  }
-  @independent_vars = ("replicate","totalMass");
-  @mins = (1,1);
-  @maxs = ($nreps,100);
-  @steps = ($nreps,4);
-  $includetxt .= "include experiments/$exptname.settings\n";
-} elsif ($exptname eq "fast-data") {
-  if ($nreps eq "") {
-    $nreps = 1000;
-  }
-  @independent_vars = ("replicate");
-  @mins = (1);
-  @maxs = ($nreps);
-  @steps = ($nreps);
-  $includetxt .= "include experiments/fast-data.settings\n";
-} else {
-  die "unknown experiment name $exptname\n";
 }
+}
+
 # eval the commandline specifications before and after
 for (@evals) {
   eval $_;
@@ -306,8 +177,8 @@ if (!defined $data_dir){
     for ($i=1; $i<10000; $i++) {
       $try = $data_dir . "-$i";
       if (!-e $try) {
-	$data_dir = $try;
-	last; # i=100;
+        $data_dir = $try;
+        last; # i=100;
       }
     }
   }
@@ -326,7 +197,6 @@ $statistics_dir =~ s|/*$||;
 
 if ($runsims)
 {
-  my $exe = "./climate";
   $settingsfile = "batch.settings";
   $batchlogfile = "batch.log";
 
@@ -350,22 +220,18 @@ if ($runsims)
   close VARS;
 
   my $maxcounter = 1;
-  for (@steps)
-  { $maxcounter *= $_; }
+  for (@independent_vars_values)
+  { $maxcounter *= scalar @$_; }
+  $dbg && print "maxcounter is $maxcounter\n";
   my $counter = 0;
   while ($counter < $maxcounter)
   {
     my $c = $counter;
     my @vals;
-    for my $i (reverse (0 .. $#steps))
-    {
-      my $x;
-      if ($steps[$i] > 1)
-      { $x = ($c % $steps[$i]) / ($steps[$i] - 1); }
-      else
-      { $x = 0; }
-      $vals[$i] = $mins[$i] + $x * ($maxs[$i] - $mins[$i]);
-      $c /= $steps[$i];
+    for my $i (reverse (0 .. $#independent_vars))
+    { my $ni = scalar @{$independent_vars_values[$i]};
+      $vals[$i] = $independent_vars_values[$i][$c % $ni];
+      $c /= $ni;
     }
     print "@vals\n";
 
@@ -376,8 +242,9 @@ if ($runsims)
 
     open SETTINGS, ">$tmpdir/$settingsfile"
       or die "couldn't open $tmpdir/$settingsfile";
-    print SETTINGS "include settings/fast.settings\n";
+    #print SETTINGS "include settings/fast.settings\n";
     #print SETTINGS "include settings/precise.settings\n";
+    print SETTINGS map { "include $_\n"; } @settings;
     print SETTINGS $includetxt;
 
     print SETTINGS "disableDisplaying true\n";
@@ -394,29 +261,29 @@ if ($runsims)
 
     close SETTINGS;
 
-    my $comm = "$exe -f $tmpdir/$settingsfile 2>&1 | /usr/bin/tee $tmpdir/$batchlogfile";
+    my $comm = "$executable -f $tmpdir/$settingsfile 2>&1 | /usr/bin/tee $tmpdir/$batchlogfile";
     print "$comm\n";
     my $t0 = time;
     if (system($comm))
     { if ($? == -1) {
-	print "failed to execute: $!\n";
+        print "failed to execute: $!\n";
       }
       elsif ($? & 127) {
-	my $sig  = ($? & 127);
-	printf "child died with signal %d, %s coredump\n",
-	  $sig,  ($? & 128) ? 'with' : 'without';
-	if ($sig == 2) {
-	  &cleanup;
-	  die "terminating";
-	}
+        my $sig  = ($? & 127);
+        printf "child died with signal %d, %s coredump\n",
+          $sig,  ($? & 128) ? 'with' : 'without';
+        if ($sig == 2) {
+          &cleanup;
+          die "terminating";
+        }
       }
       else {
-	my $ret = $? >> 8;
-	printf "child exited with value %d\n", $ret;
-	if ($ret == 255)
-	{ &cleanup;
-	  die "terminating";
-	}
+        my $ret = $? >> 8;
+        printf "child exited with value %d\n", $ret;
+        if ($ret == 255)
+        { &cleanup;
+          die "terminating";
+        }
       }
       &cleanup;
       die "simulation returned nonzero";
@@ -456,9 +323,9 @@ if ($runsims)
 
     if($delete && $vals[$#vals] == $maxs[$#maxs]) {
       if ($collect) {
-	$dbg && print "About to record results!\n";
-	record_results();
-	$dbg && print "Done recording results!\n";
+        $dbg && print "About to record results!\n";
+        record_results();
+        $dbg && print "Done recording results!\n";
       }
 
       $dbg && print "Deleting files!\n";
@@ -532,9 +399,27 @@ sub record_results {
   my $outcomes_file = "$outcomes_dir/outcomes.out";
 
   my %data;
+  for $csv (`find $data_dir -name outcome.csv -print`)
+  { chomp $csv;
+    my $key = $csv;
+    $key =~ s|$data_dir/(.*)/outcome.csv|$1|;
+    $key =~ s|/| |g;
+    $dbg && print "opening $csv - key is $key\n";
+    my %outcome;
+    my $fh = Tie::Handle::CSV->new($csv, header=>1);
+    while (my $csv_line = <$fh>) # expect only one line
+    { my @names = keys %$csv_line;
+      $dbg && print "names: ". join(' | ',@names). "\n";
+      $dbg && print "values: " . join(' ', $csv_line->{@names})."\n";
+      @outcome{@names} = $csv_line->{@names};
+    }
+    $data{$key} = join(' ',@outcome{@dependent_vars});
+    print "$key $data{$key}\n";
+  }
+
+  if (0) {
   for $dir (`find $data_dir -name log.0 -print`)
-  {
-    my %current_community = (), %last_community = ();
+  { my %current_community = (), %last_community = ();
 
     chomp $dir;
     $dir =~ s|/log.0||;
@@ -570,9 +455,9 @@ sub record_results {
       if (/lineages -> (\d+)/)
       { my $nl = $1;
         if (($outcome{eq_nsp} == 0) && $outcome{equil})
-	{ $outcome{eq_nsp} = $nl; }
+        { $outcome{eq_nsp} = $nl; }
         if (($outcome{ess_nsp} == 0) && $outcome{ess})
-	{ $outcome{ess_nsp} = $nl; }
+        { $outcome{ess_nsp} = $nl; }
         if ($outcome{final_ess}) { $outcome{final_nsp} = $nl; }
       }
       if (/runtime: (\d+) sec/)
@@ -584,27 +469,27 @@ sub record_results {
       elsif ($new_species_type)
       { if (/^(N[0-9]+) /)
         { $lineage{$1} = $1; }
-	else
-	{ print "New species type not found ($logfile line $.)!\n"; }
-	$new_species_type = 0;
+        else
+        { print "New species type not found ($logfile line $.)!\n"; }
+        $new_species_type = 0;
       }
       if ($read_after_equil && /(N[0-9]+) ->/)
       { ++$current_community{$lineage{$1}};
-	$dbg && print "$1:",$lineage{$1}," ";
+        $dbg && print "$1:",$lineage{$1}," ";
       }
       if ($read_after_equil && /^\}/)
       { $read_after_equil = 0;
 #	$dbg &&
 #	  print "\n", join(" ",sort keys %current_community), " =? ",
 #	    join(" ",sort keys %last_community), "\n";
-	if (join(" ",sort keys %current_community)
-	    ne join(" ",sort keys %last_community))
-	{ ++$outcome{community_structures};
-	  %last_community = %current_community;
-	  $dbg && print " DIFFERENT COMMUNITY";
-	}
-	$dbg && print "\n";
-	%current_community = ();
+        if (join(" ",sort keys %current_community)
+            ne join(" ",sort keys %last_community))
+        { ++$outcome{community_structures};
+          %last_community = %current_community;
+          $dbg && print " DIFFERENT COMMUNITY";
+        }
+        $dbg && print "\n";
+        %current_community = ();
       }
     }
     close LOGFILE;
@@ -613,6 +498,7 @@ sub record_results {
 #    $dbg && print "outcome{@dependent_vars} = @outcome{@dependent_vars}\n";
     $data{$key} = join(' ',@outcome{@dependent_vars});
     print "$key $data{$key}\n";
+  }
   }
 
   my @keys = sort key_sort_sub keys %data;
@@ -769,3 +655,4 @@ sub cleanup {
   unlink($settingsfile);
   unlink($batchlogfile);
 }
+

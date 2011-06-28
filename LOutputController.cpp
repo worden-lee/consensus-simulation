@@ -58,7 +58,7 @@ void LOutputController::recordCommunity(void)
 void LOutputController::finish(void)
 { CSVDisplay csvstats(lparameters.outputDirectory() + "/outcome.csv");
   csvstats.writeLine(
-      "# n.individuals min.value mean.value max.value n.satisfied\n");
+      "#n.individuals, min.value, mean.value, max.value, n.satisfied\n");
   map<string, double> stats = ((Collective*)site->community)->outcomeStats();
   csvstats << stats["n.individuals"] << stats["min.value"] 
     << stats["mean.value"] << stats["max.value"]
