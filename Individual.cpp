@@ -31,7 +31,7 @@ bool Individual::acceptable(const BitString &proposal)
 
 BitString Individual::makeProposal(const BitString &proposal)
 { string strat = lparameters.individualProposalStrategy();
-  cout << "individual strategy is '" << strat << "'" << endl;
+  //cout << "individual strategy is '" << strat << "'" << endl;
   if (strat == "best")
   { BitString curr = proposal, nxt = proposal;
     do
@@ -85,7 +85,7 @@ BitString Individual::makeProposal(const BitString &proposal)
 bool Individual::acceptableReplacement( const BitString &proposal,
                                         const BitString &over )
 { string bs = lparameters.blockStrategy();
-  cout << "block strategy is " << bs << endl;
+  //cout << "block strategy is " << bs << endl;
   if (bs == "if worse")
     return evaluate(proposal) >= evaluate(over);
   else if (bs == "if worse and not acceptable")

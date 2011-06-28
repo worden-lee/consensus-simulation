@@ -12,6 +12,8 @@
 //#include "ValueWriter.h"
 #include "rand.h"
 #include "util.h"
+#include <algorithm>
+#include <numeric>
 
 Collective::Collective(void) : n_failures(0)
 {
@@ -27,7 +29,7 @@ void Collective::initialize(void)
   checkAllocation();
   fill(_alive.begin(), _alive.end(), true);
   currentProposal = BitString::wildType(
-      lparameters.nBlocks(), lparameters.blockSize()); // a.k.a. 0.
+      lparameters.nBlocks(), lparameters.nBits() / lparameters.nBlocks());
 }
 
 void Collective::checkAllocation(void)
@@ -50,7 +52,7 @@ void Collective::calcNextState(double t, const VectorAccess<double>*x,
   oc->log( "at time %g, seeking consensus on proposal %s\n", 
                                t, currentProposal.hexString() );
   string strat = lparameters.facilitationStrategy();
-  oc->log("facilitation strategy is '%s'\n", strat.c_str());
+  //oc->log("facilitation strategy is '%s'\n", strat.c_str());
   for (int i = 0; i < nX; ++i)
     oc->log( "Individual %d values %s at %g\n", i, currentProposal.hexString(),
              individuals[i].evaluate(currentProposal) );
@@ -136,4 +138,22 @@ void Collective::calcNextState(double t, const VectorAccess<double>*x,
   { oc->log("Unknown strategy!\n");
     finished = true;
   }
+}
+
+map<string, double> Collective::outcomeStats(void)
+{ map<string, double> stats;
+  stats["n.individuals"] = individuals.size();
+  vector<double> values(individuals.size());
+  int nsatisfied = 0;
+  for (unsigned i = 0; i < individuals.size(); ++i)
+  { values[i] = individuals[i].evaluate(currentProposal);
+    if (individuals[i].acceptable(currentProposal))
+      ++nsatisfied;
+  }
+  stats["min.value"] = *min_element(values.begin(), values.end());
+  stats["mean.value"] = 
+    accumulate(values.begin(), values.end(), 0.0) / individuals.size();
+  stats["max.value"] = *max_element(values.begin(), values.end());
+  stats["n.satisfied"] = nsatisfied;
+  return stats;
 }

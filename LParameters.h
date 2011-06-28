@@ -38,8 +38,8 @@ public:
 
   // params for BlockFitnessLandscape
   DECLARE_PARAM(string, hashKey)
+  DECLARE_PARAM(int, nBits)
   DECLARE_PARAM(int, nBlocks)
-  DECLARE_PARAM(int, blockSize)
 
   DECLARE_PARAM(string, individualProposalStrategy)
   DECLARE_PARAM(string, facilitationStrategy)

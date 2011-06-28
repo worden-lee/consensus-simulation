@@ -21,7 +21,8 @@ void FitnessLandscape::drawLandscapeGraph(ostream &os)
   const
 {
   // you will want to use something like 'dot -Tps -ols-1-6.ps' on this file
-  BitString wt = BitString::wildType(lparameters.nBlocks(), lparameters.blockSize());
+  BitString wt = BitString::wildType(lparameters.nBlocks(), 
+      lparameters.nBits() / lparameters.nBlocks());
   BitString g = wt, g1;
   os << "graph \"ls-" << g.nBlocks
      << 'x' << g.blockSize << "\" {\n"

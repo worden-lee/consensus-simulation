@@ -2,6 +2,7 @@
 #include "Site.h"
 #include "Collective.h"
 #include "LParameters.h"
+#include "CSVDisplay.h"
 
 void LOutputController::recordCommunity(void)
 {
@@ -10,7 +11,7 @@ void LOutputController::recordCommunity(void)
 
   log( "Proposal on table is %s\n",
        ((Collective *)(site->community))->currentProposal.hexString() );
-  if ( lparameters.blockSize() * lparameters.nBlocks() <= 6 )
+  if ( lparameters.nBits() <= 6 )
   {
     Collective *cv = (Collective *)site->community;
     for (int i = 0; (unsigned)i < cv->individuals.size(); ++i )
@@ -54,4 +55,14 @@ void LOutputController::recordCommunity(void)
   }
 }
 
-    
+void LOutputController::finish(void)
+{ CSVDisplay csvstats(lparameters.outputDirectory() + "/outcome.csv");
+  csvstats.writeLine(
+      "# n.individuals min.value mean.value max.value n.satisfied\n");
+  map<string, double> stats = ((Collective*)site->community)->outcomeStats();
+  csvstats << stats["n.individuals"] << stats["min.value"] 
+    << stats["mean.value"] << stats["max.value"]
+    << stats["n.satisfied"];
+  csvstats.newRow();
+  SiteOutputController::finish();
+}

@@ -12,6 +12,7 @@
 #include "Individual.h"
 #include "util.h"
 #include <set>
+#include <map>
 
 class Collective : public Community
 {
@@ -26,6 +27,7 @@ public:
   void initialize(void);
   bool isVariableInUse(const Index &);
   void calcNextState(double, const VectorAccess<double> *, VectorAccess<double>*);
+  map<string, double> outcomeStats();
 protected:
   int n_failures;
 };

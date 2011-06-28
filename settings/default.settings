@@ -1,8 +1,8 @@
 groupSize 1
 
 hashKey There is a rose in Spanish Harlem
+nBits 4
 nBlocks 1
-blockSize 4
 
 individualProposalStrategy best
 facilitationStrategy each proposes one
