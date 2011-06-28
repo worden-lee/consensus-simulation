@@ -6,19 +6,28 @@
  */
 #include "Individual.h"
 #include "rand.h"
+#include <stdlib.h>
+#include <sys/time.h>
 
 Individual::Individual()
-  : fitnesslandscape(lparameters.hashKey() + ' ' + individual_seed(), 0.5)
+  : fitnesslandscape(individual_seed(), 0.5)
 { cout << "New individual, seed = " << fitnesslandscape.seed << endl;
 }
 
-const char *Individual::individual_seed(void)
+string Individual::individual_seed(void)
 { //static const unsigned int nchars = sizeof(unsigned int) / sizeof(char);
   static char buf[3];
   buf[0] = (unsigned char)(' ' + rand_index(80));
   buf[1] = (unsigned char)(' ' + rand_index(80));
   buf[2] = '\0';
-  return &buf[0];
+  string s = lparameters.hashKey();
+  if (s.length() == 0)
+  { struct timeval tv;
+    struct timezone tz;
+    gettimeofday(&tv, &tz);
+    s = int_to_string(tv.tv_sec) + " " + int_to_string(tv.tv_usec);
+  }
+  return s + " " + &buf[0];
 }
 
 double Individual::evaluate(const BitString &proposal)

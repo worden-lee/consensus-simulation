@@ -34,10 +34,9 @@ void Collective::initialize(void)
 
 void Collective::checkAllocation(void)
 { Community::checkAllocation();
-  unsigned as = alive.size();
-  if (as < individuals.size())
-    individuals.resize(as);
-  else while (individuals.size() < as)
+  if (_nSpecies < individuals.size())
+    individuals.resize(_nSpecies);
+  else while (individuals.size() < _nSpecies)
     // do this strangely to make sure none of them are duplicates
     individuals.resize(individuals.size() + 1);
 }

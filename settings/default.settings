@@ -1,6 +1,7 @@
 groupSize 1
 
-hashKey There is a rose in Spanish Harlem
+// leaving this unset means use the current time in microseconds
+//hashKey There is a rose in Spanish Harlem
 nBits 4
 nBlocks 1
 

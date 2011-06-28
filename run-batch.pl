@@ -396,7 +396,7 @@ sub record_results {
   if (!-e $outcomes_dir)
   { mkpath($outcomes_dir); }
 
-  my $outcomes_file = "$outcomes_dir/outcomes.out";
+  my $outcomes_file = "$outcomes_dir/outcomes.csv";
 
   my %data;
   for $csv (`find $data_dir -name outcome.csv -print`)
@@ -507,10 +507,10 @@ sub record_results {
   if($intro==0) {
     open OUTCOME, ">$outcomes_file"
       or die "couldn't open $outcomes_file for writing";
-    #print OUTCOME "# $independent_vars $dependent_vars\n";
-    print OUTCOME "# ",
-      join(' ',(@independent_vars,@dependent_vars)),
-      "\n";
+    #print OUTCOME "# ",
+    #  join(' ',(@independent_vars,@dependent_vars)),
+    #  "\n";
+    print OUTCOME join(',',(@independent_vars,@dependent_vars)), "\n";
     $intro=1;
   }
   else {
@@ -526,24 +526,26 @@ sub record_results {
       if ($lasth0 ne "")
       {
         print "\n";
-        print OUTCOME "\n";
+        #print OUTCOME "\n";
       }
       $lasth0 = $1;
     }
-    print "$k $data{$k}\n";
-    print OUTCOME "$k $data{$k}\n";
+    my $line = "$k $data{$k}\n";
+    $line =~ s/ /,/g;
+    print $line;
+    print OUTCOME $line;
   }
   close OUTCOME;
 }
 
 sub record_statistics {
 
-  my $outcome = "$outcomes_dir/outcomes.out";
+  my $outcome = "$outcomes_dir/outcomes.csv";
 
   if (!-e $statistics_dir)
   { mkpath( $statistics_dir ); }
 
-  my $statistics = "$statistics_dir/statistics.out";
+  my $statistics = "$statistics_dir/statistics.csv";
   open STATISTICS, ">$statistics"
     or die "couldn't open $statistics for writing";
 
@@ -562,7 +564,7 @@ sub record_statistics {
   $dbg && print "dependent vars: @dependent_vars\n";
 
   print STATISTICS
-    join(' ',(@independent_vars_norep,"replicates",@dependent_vars)),"\n";
+    join(',',(@independent_vars_norep,"replicates",@dependent_vars)),"\n";
 
   # now read each line of outcomes and collect in %stats
 
@@ -571,7 +573,7 @@ sub record_statistics {
     chomp $line;
     next if ($line =~ /^\s*$/);
 
-    my @fields = split(/ +/, $line);
+    my @fields = split(/,/, $line);
     my @keys;
     foreach $i (0 .. $nkeys-1)
     { if ($i != $replicate_column)
@@ -604,7 +606,7 @@ sub record_statistics {
       {
 #	$dbg && print "stats{$key_string}[",$i+1,"] == $stats{$key_string}[$i+1]; ";
 #	$dbg && print "+= $values[$i]: ";
-	$stats{$key_string}[$i+1] += $values[$i];
+        $stats{$key_string}[$i+1] += $values[$i];
 #	$dbg && print "$stats{$key_string}[$i+1]\n";
       }
     }
@@ -614,14 +616,13 @@ sub record_statistics {
   $dbg && print "Done! statistics: \n";
   foreach $k (sort keys %stats)
   { my $nreps = $stats{$k}[0];
-    print STATISTICS "$k $nreps";
-    $dbg && print "$k $nreps";
+    $line = "$k $nreps";
     foreach $i (0 .. $#dependent_vars)
-    { print STATISTICS " ",($stats{$k}[$i+1]/$nreps);
-      $dbg && print " ",($stats{$k}[$i+1]/$nreps);
+    { $line .= ' '.($stats{$k}[$i+1]/$nreps);
     }
-    print STATISTICS "\n";
-    $dbg && print "\n";
+    $line =~ s/ /,/g;
+    print STATISTICS "$line\n";
+    $dbg && print "$line\n";
   }
 
   close READFILE;

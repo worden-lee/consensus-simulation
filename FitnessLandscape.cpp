@@ -111,7 +111,7 @@ void FitnessLandscape::writeLabel(const BitString &s,
 */
 BlockFitnessLandscape::BlockFitnessLandscape(string s, double water)
   : seed(s), waterline(water)
-{}
+{ }
 
 /* returns fitness from 0 to maxFecundity for each block
    thus these values should be averaged, not summed
