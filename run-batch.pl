@@ -410,8 +410,8 @@ sub record_results {
     while (my $csv_line = <$fh>) # expect only one line
     { my @names = keys %$csv_line;
       $dbg && print "names: ". join(' | ',@names). "\n";
-      $dbg && print "values: " . join(' ', $csv_line->{@names})."\n";
-      @outcome{@names} = $csv_line->{@names};
+      $dbg && print "values: " . join(' ', @$csv_line{@names})."\n";
+      @outcome{@names} = @$csv_line{@names};
     }
     $data{$key} = join(' ',@outcome{@dependent_vars});
     print "$key $data{$key}\n";
