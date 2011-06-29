@@ -406,7 +406,7 @@ sub record_results {
   { chomp $csv;
     my $key = $csv;
     $key =~ s|$data_dir/(.*)/outcome.csv|$1|;
-    $key =~ s|/| |g;
+    $key =~ s|/|,|g;
     $dbg && print "opening $csv - key is $key\n";
     my %outcome;
     my $fh = Tie::Handle::CSV->new($csv, header=>1);
@@ -416,8 +416,8 @@ sub record_results {
       $dbg && print "values: " . join(' ', @$csv_line{@names})."\n";
       @outcome{@names} = @$csv_line{@names};
     }
-    $data{$key} = join(' ',@outcome{@dependent_vars});
-    print "$key $data{$key}\n";
+    $data{$key} = join(',',@outcome{@dependent_vars});
+    print "$key,$data{$key}\n";
   }
 
   if (0) {
@@ -524,17 +524,16 @@ sub record_results {
   my $lasth0 = "";
   for $k (@keys)
   {
-    if (($k =~ /(\S+)\s/) and ($1 ne $lasth0))
-    {
-      if ($lasth0 ne "")
-      {
-        print "\n";
+    #if (($k =~ /(\S+)\s/) and ($1 ne $lasth0))
+    #{
+    #  if ($lasth0 ne "")
+    #  {
+    #    print "\n";
         #print OUTCOME "\n";
-      }
-      $lasth0 = $1;
-    }
-    my $line = "$k $data{$k}\n";
-    $line =~ s/ /,/g;
+    #  }
+    #  $lasth0 = $1;
+    #}
+    my $line = "$k,$data{$k}\n";
     print $line;
     print OUTCOME $line;
   }
@@ -585,7 +584,7 @@ sub record_statistics {
     my $replicate = $fields[$replicate_column];
     my @values = @fields[$nkeys .. ($#fields)];
 
-    my $key_string = join(' ',@keys);
+    my $key_string = join(',',@keys);
 
     $dbg && print "====================\n\n";
     $dbg && print "Read line: @fields\n";
@@ -594,7 +593,7 @@ sub record_statistics {
     $dbg && print "  values: @values\n";
 
     # $key_string is the independent variables' values
-    #  (not counting replicate) joined by ' '
+    #  (not counting replicate) joined by ','
     # $stats{$key_string} is (by reference) an array containing
     #  first the # of replicates, and then the sums of each of the
     #  dependent variables.
@@ -619,11 +618,10 @@ sub record_statistics {
   $dbg && print "Done! statistics: \n";
   foreach $k (sort keys %stats)
   { my $nreps = $stats{$k}[0];
-    $line = "$k $nreps";
+    $line = "$k,$nreps";
     foreach $i (0 .. $#dependent_vars)
-    { $line .= ' '.($stats{$k}[$i+1]/$nreps);
+    { $line .= ','.($stats{$k}[$i+1]/$nreps);
     }
-    $line =~ s/ /,/g;
     print STATISTICS "$line\n";
     $dbg && print "$line\n";
   }
