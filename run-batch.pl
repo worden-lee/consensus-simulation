@@ -27,10 +27,12 @@ sub usage_err {
 
 # package for mkpath
 use File::Path;
-
+# for csv reading
 use Tie::Handle::CSV;
+# for shell commands
+use String::ShellQuote
 
-$[ = 0;
+#$[ = 0;
 
 # independent vars and how they loop
 my @independent_vars, @independent_vars_values;
@@ -203,7 +205,7 @@ if ($runsims)
   # delete files if we have -r activated
   if ($delete) {
     #print "Deleting files!\n";
-    $comm = "rm -R $data_dir/*";
+    $comm = "rm -R ". shell_quote "$data_dir/*";
     print "$comm\n";
     system("$comm") || die "couldn't delete $data_dir/*";
   }
@@ -222,7 +224,7 @@ if ($runsims)
   my $maxcounter = 1;
   for (@independent_vars_values)
   { $maxcounter *= scalar @$_; }
-  $dbg && print "maxcounter is $maxcounter\n";
+  
   my $counter = 0;
   while ($counter < $maxcounter)
   {
@@ -238,7 +240,7 @@ if ($runsims)
     my $tmpdir = "$data_dir/running";
     if (!-e $tmpdir)
     { mkpath($tmpdir); }
-    system("rm -rf $tmpdir/*");
+    system("rm -rf " . shell_quote "$tmpdir/*");
 
     open SETTINGS, ">$tmpdir/$settingsfile"
       or die "couldn't open $tmpdir/$settingsfile";
@@ -261,7 +263,7 @@ if ($runsims)
 
     close SETTINGS;
 
-    my $comm = "$executable -f $tmpdir/$settingsfile 2>&1 | /usr/bin/tee $tmpdir/$batchlogfile";
+    my $comm = shell_quote("$executable", "-f", "$tmpdir/$settingsfile"). " 2>&1 | /usr/bin/tee " . shell_quote "$tmpdir/$batchlogfile";
     print "$comm\n";
     my $t0 = time;
     if (system($comm))
@@ -316,8 +318,8 @@ if ($runsims)
     #print "\n$dir\n";
     if (!-e $outdir) # make the directory AND all its parent dirs
     { mkpath($outdir); }
-    system("rm -rf $outdir");
-    $comm = "mv $tmpdir/ $outdir";
+    system("rm -rf " . shell_quote "$outdir");
+    $comm = "mv " . shell_quote("$tmpdir/", "$outdir");
     print "$comm\n";
     system("$comm") && die "couldn't relocate $tmpdir to $outdir";
 
@@ -329,7 +331,7 @@ if ($runsims)
       }
 
       $dbg && print "Deleting files!\n";
-      $comm = "rm -R $data_dir/$vals[0]";
+      $comm = "rm -R " . shell_quote "$data_dir/$vals[0]";
       print "$comm\n";
       system("$comm") && die "couldn't delete $data_dir/$vals[0]";
     }
@@ -399,7 +401,8 @@ sub record_results {
   my $outcomes_file = "$outcomes_dir/outcomes.csv";
 
   my %data;
-  for $csv (`find $data_dir -name outcome.csv -print`)
+  my $comm = shell_quote("find", $data_dir, "-name", "outcome.csv", "-print");
+  for $csv (`$comm`)
   { chomp $csv;
     my $key = $csv;
     $key =~ s|$data_dir/(.*)/outcome.csv|$1|;

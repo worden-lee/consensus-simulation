@@ -8,4 +8,5 @@ and satisfy its dependencies as well
 Then 'make' followed by './consensus' ought to do it.
 It puts its output in 'out/'.
 
-run-batch.pl requires perl modules File::Path and Tie::Handle::CSV.
+run-batch.pl requires perl modules File::Path, String::ShellQuote,
+and Tie::Handle::CSV.
