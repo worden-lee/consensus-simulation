@@ -48,9 +48,9 @@ void LOutputController::recordCommunity(void)
     if ( lparameters.runDot() )
     {
       //system("make dot");
-      system("for d in out/*.dot; "
-	     "do echo dot -Tps -o ${d}.eps $d; "
-	     "dot -Tps -o ${d}.eps $d; done");
+      string comm = "for d in " + lparameters.outputDirectory() + "/*.dot; "
+        + "do echo dot -Tps -o ${d}.eps $d; dot -Tps -o ${d}.eps $d; done";
+      system(comm.c_str());
     }
   }
 }
