@@ -216,9 +216,9 @@ if ($runsims)
     mkpath($data_dir) || die "couldn't create $data_dir/";
   }
 
-  open VARS, ">$data_dir/vars"
-    or die "couldn't open $data_dir/vars";
-  print VARS join(" ", @independent_vars), "\n";
+  open VARS, ">$data_dir/vars.csv"
+    or die "couldn't open $data_dir/vars.csv";
+  print VARS join(',', @independent_vars), "\n";
   close VARS;
 
   my $maxcounter = 1;
@@ -398,6 +398,11 @@ sub record_results {
   if (!-e $outcomes_dir)
   { mkpath($outcomes_dir); }
 
+  my $vars_file = "$data_dir/vars.csv";
+  my $fh = Tie::Handle::CSV->new($vars_file, header=>0);
+  my $vars_line = <$fh>; # just the first line
+  @independent_vars = @$vars_line;
+
   my $outcomes_file = "$outcomes_dir/outcomes.csv";
 
   my %data;
@@ -411,10 +416,10 @@ sub record_results {
     my %outcome;
     my $fh = Tie::Handle::CSV->new($csv, header=>1);
     while (my $csv_line = <$fh>) # expect only one line
-    { my @names = keys %$csv_line;
-      $dbg && print "names: ". join(' | ',@names). "\n";
-      $dbg && print "values: " . join(' ', @$csv_line{@names})."\n";
-      @outcome{@names} = @$csv_line{@names};
+    { @dependent_vars = keys %$csv_line;
+      $dbg && print "names: ". join(' | ',@dependent_vars). "\n";
+      $dbg && print "values: " . join(' ', @$csv_line{@dependent_vars})."\n";
+      @outcome{@dependent_vars} = @$csv_line{@dependent_vars};
     }
     $data{$key} = join(',',@outcome{@dependent_vars});
     print "$key,$data{$key}\n";
