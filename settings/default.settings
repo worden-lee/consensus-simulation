@@ -6,7 +6,7 @@ nBits 4
 nBlocks 1
 
 individualProposalStrategy best
-facilitationStrategy each proposes one
+facilitationStrategy anyone proposes
 blockStrategy if worse
 
 // -1 means make the number from the number of bits

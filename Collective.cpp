@@ -91,8 +91,25 @@ void Collective::calcNextState(double t, const VectorAccess<double>*x,
         break;
       }
   }
-  else if (strat == "one proposal at a time")
-  { unsigned ind = rand_index(individuals.size());
+  else if (strat == "one proposal at a time" or strat == "anyone proposes"
+          or strat == "blockers propose")
+  { unsigned ind;
+    if (strat == "blockers propose")
+    { vector<unsigned> blockers;
+      for (unsigned call_on = 0; call_on < individuals.size(); ++call_on)
+        if ( ! individuals[call_on].acceptable(currentProposal) )
+        { oc->log("Individual %d blocks the proposal.\n", call_on);
+          blockers.push_back(call_on);
+        }
+      if (blockers.empty())
+      { oc->log("Nobody blocks the proposal.\n");
+        finished = true;
+        return;
+      }
+      ind = blockers[rand_index(blockers.size())];
+    }
+    else
+      ind = rand_index(individuals.size());
     finished = false;
     BitString newProposal = individuals[ind].makeProposal(currentProposal);
     int mnpf = lparameters.maxNumberOfProposalFailures();
@@ -134,7 +151,7 @@ void Collective::calcNextState(double t, const VectorAccess<double>*x,
     }
   }
   else
-  { oc->log("Unknown strategy!\n");
+  { oc->log("Unknown strategy '%s'!\n", strat.c_str());
     finished = true;
   }
 }
