@@ -7,7 +7,10 @@
 class Individual
 {
 public:
-  BlockFitnessLandscape fitnesslandscape;
+//BlockFitnessLandscape fitnesslandscape;
+  static BlockFitnessLandscape sharedlandscape;
+  CompositeFitnessLandscape<BlockFitnessLandscape, BlockFitnessLandscape>
+    fitnesslandscape;
   Individual();
   string individual_seed(void);
   double evaluate(const BitString &proposal);

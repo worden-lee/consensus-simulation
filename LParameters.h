@@ -41,6 +41,10 @@ public:
   DECLARE_PARAM(int, nBits)
   DECLARE_PARAM(int, nBlocks)
 
+  // for CompositeFitnessLandscape
+  DECLARE_PARAM(double, weightingForSharedLandscape)
+
+  // for Collective (is that right?)
   DECLARE_PARAM(string, individualProposalStrategy)
   DECLARE_PARAM(string, facilitationStrategy)
   DECLARE_PARAM(string, blockStrategy)

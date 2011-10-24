@@ -28,14 +28,7 @@ protected:
   virtual void writeLabel(const BitString &s, std::ostream &os) const;
 };
 
-class expFitnessLandscape : public FitnessLandscape
-{
-private:
-  static BitString &refBitString;
-public:
-  virtual double fitness(const BitString&x) const;
-};
-
+// Perelson + Macken 1995, correlated fitness landscape implemented using blocks
 class BlockFitnessLandscape : public FitnessLandscape
 {
 public:
@@ -43,6 +36,49 @@ public:
   double waterline;
   BlockFitnessLandscape(string s, double water=0);
   double blockFitness(const BitString &x, int blockno) const;
+  virtual double fitness(const BitString&x) const;
+};
+
+// an abstraction to create correlation among multiple landscapes by 
+// combining a shared fitness landscape with a unique private one.
+template <class ExtrinsicClass, class IntrinsicClass>
+class CompositeFitnessLandscape : public IntrinsicClass
+{
+protected:
+  ExtrinsicClass *extrinsicLandscape;
+  double weighting;
+public:
+  //Constructor for when IntrinsicClass is BlockFitnessLandscape
+  // I don't think it would be good to do this using a partial
+  // template specialization because it seems really inconvenient.
+  CompositeFitnessLandscape(string s, double water = 0) :
+    IntrinsicClass(s, water) {}
+
+  CompositeFitnessLandscape<ExtrinsicClass, IntrinsicClass> &
+    setExtrinsicLandscape(ExtrinsicClass&els)
+  { extrinsicLandscape = &els;
+    return *this;
+  }
+  CompositeFitnessLandscape<ExtrinsicClass, IntrinsicClass> &
+    setWeighting(double w)
+  { weighting = w;
+    return *this;
+  }
+  virtual double fitness(const BitString &x)
+  { double fitness = 0;
+    if (weighting < 1)
+      fitness += (1-weighting) * IntrinsicClass::fitness(x);
+    if (weighting > 0)
+      fitness += weighting*extrinsicLandscape->fitness(x);
+    return fitness;
+  }
+};
+
+class expFitnessLandscape : public FitnessLandscape
+{
+private:
+  static BitString &refBitString;
+public:
   virtual double fitness(const BitString&x) const;
 };
 

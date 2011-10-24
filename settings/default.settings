@@ -5,6 +5,8 @@ groupSize 1
 nBits 4
 nBlocks 1
 
+weightingForSharedLandscape 0
+
 individualProposalStrategy best
 facilitationStrategy anyone proposes
 blockStrategy if worse

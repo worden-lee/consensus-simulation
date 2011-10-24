@@ -9,9 +9,13 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
+BlockFitnessLandscape Individual::sharedlandscape("shared seed", 0.5);
+
 Individual::Individual()
   : fitnesslandscape(individual_seed(), 0.5)
-{ cout << "New individual, seed = " << fitnesslandscape.seed << endl;
+{ fitnesslandscape.setExtrinsicLandscape(Individual::sharedlandscape)
+    .setWeighting(lparameters.weightingForSharedLandscape());
+  cout << "New individual, seed = " << fitnesslandscape.seed << endl;
 }
 
 string Individual::individual_seed(void)
