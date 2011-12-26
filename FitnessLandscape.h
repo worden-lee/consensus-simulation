@@ -18,6 +18,7 @@ public:
   // sometimes useful
   virtual bool isLocalPeak(const BitString&x)
     const;
+  virtual BitString bestNeighbor(const BitString&x) const;
   // draw hypercube graph with fitnesses (be careful if graph is large)
   virtual void drawLandscapeGraph(std::ostream &os)
     const;

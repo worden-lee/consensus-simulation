@@ -49,34 +49,12 @@ BitString Individual::makeProposal(const BitString &proposal)
   { BitString curr = proposal, nxt = proposal;
     do
     { curr = nxt;
-      double nfitness = evaluate(nxt);
-      for (unsigned i = 0; i < proposal.nBlocks; ++i)
-        for (unsigned j = 0; j < proposal.blockSize; ++j)
-        { BitString poss;
-          curr.mutate(&poss, i, j);
-          double pfitness = evaluate(poss);
-          if (pfitness >= nfitness)
-          { nxt = poss;
-            nfitness = pfitness;
-          }
-        }
+      nxt = fitnesslandscape.bestNeighbor(curr);
     } while (nxt != curr);
     return curr;
   }
   else if (strat == "best neighbor")
-  { BitString curr = proposal;
-    double cfit = evaluate(proposal);
-    for (unsigned i = 0; i < proposal.nBlocks; ++i)
-      for (unsigned j = 0; j < proposal.blockSize; ++j)
-      { BitString poss;
-        proposal.mutate(&poss, i, j);
-        double pfit = evaluate(poss);
-        if (pfit > cfit)
-        { cfit = pfit;
-          curr = poss;
-        }
-      }
-    return curr;
+  { return fitnesslandscape.bestNeighbor(proposal);
   }
   else if (strat == "any improvement")
   { BitString poss;

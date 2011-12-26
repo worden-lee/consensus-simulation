@@ -1,10 +1,11 @@
 /*
- * A group of individuals for consensus dynamics model
- *
- * 6/2011  Lee Worden
+* A group of individuals for consensus dynamics model
+*
+* 6/2011  Lee Worden
 */
 #include "Collective.h"
 #include "BitString.h"
+#include "MinimumLandscape.h"
 #include "LParameters.h"
 #include "Site.h"
 #include "ParticleIntegrator.h"
@@ -29,7 +30,7 @@ void Collective::initialize(void)
   checkAllocation();
   fill(_alive.begin(), _alive.end(), true);
   currentProposal = BitString::wildType(
-      lparameters.nBlocks(), lparameters.nBits() / lparameters.nBlocks());
+    lparameters.nBlocks(), lparameters.nBits() / lparameters.nBlocks());
 }
 
 void Collective::checkAllocation(void)
@@ -37,19 +38,23 @@ void Collective::checkAllocation(void)
   if ((unsigned)_nSpecies < individuals.size())
     individuals.resize(_nSpecies);
   else while (individuals.size() < (unsigned)_nSpecies)
-    // do this strangely to make sure none of them are duplicates
-    individuals.resize(individuals.size() + 1);
+  // do this strangely to make sure none of them are duplicates
+  individuals.resize(individuals.size() + 1);
 }
 
-bool Collective::isVariableInUse(const Index &n)
-{ return !finished; //true;
+//bool Collective::isVariableInUse(const Index &n)
+//{ return !finished; //true;
+//}
+
+bool Collective::allDead(void)
+{ return finished;
 }
 
 void Collective::calcNextState(double t, const VectorAccess<double>*x,
-                               VectorAccess<double>*nx)
+                             VectorAccess<double>*nx)
 { SiteOutputController *oc = site->outputcontroller;
   oc->log( "at time %g, seeking consensus on proposal %s\n", 
-                               t, currentProposal.hexString() );
+           t, currentProposal.hexString() );
   string strat = lparameters.facilitationStrategy();
   //oc->log("facilitation strategy is '%s'\n", strat.c_str());
   for (int i = 0; i < nX; ++i)
@@ -149,6 +154,23 @@ void Collective::calcNextState(double t, const VectorAccess<double>*x,
         }
       }
     }
+  }
+  else if (strat == "search minimum landscape")
+  { //unsigned triesRemaining = lparameters.maxNumberOfProposalFailures();
+    typedef individuals_landscape_iterator<
+        typeof individuals.begin(), typeof individuals[0].fitnesslandscape> 
+      LandscapeIteratorT;
+    LandscapeIteratorT li(individuals.begin(), individuals.end()),
+                       le(individuals.end(), individuals.end());
+    MinimumLandscape<LandscapeIteratorT> ml(li, le);
+    oc->log("Search minimum landscape for improvement to %s\n",
+        currentProposal.hexString());
+    BitString nextProposal = ml.bestNeighbor(currentProposal);
+    oc->log("Next proposal is %s\n", nextProposal.hexString());
+    if (nextProposal == currentProposal)
+      finished = true;
+    else
+      currentProposal = nextProposal;
   }
   else
   { oc->log("Unknown strategy '%s'!\n", strat.c_str());

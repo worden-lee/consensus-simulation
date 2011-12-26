@@ -17,6 +17,22 @@ bool FitnessLandscape::isLocalPeak(const BitString &x) const
   return true;
 }
 
+BitString FitnessLandscape::bestNeighbor(const BitString &x) const
+{ BitString best = x;
+  double cfit = fitness(x);
+  for (unsigned i = 0; i < x.nBlocks; ++i)
+    for (unsigned j = 0; j < x.blockSize; ++j)
+    { BitString poss;
+      x.mutate(&poss, i, j);
+      double pfit = fitness(poss);
+      if (pfit > cfit)
+      { cfit = pfit;
+        best = poss;
+      }
+    }
+  return best;
+}
+
 void FitnessLandscape::drawLandscapeGraph(ostream &os)
   const
 {

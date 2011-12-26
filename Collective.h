@@ -25,7 +25,8 @@ public:
   ~Collective();
   void checkAllocation(void);
   void initialize(void);
-  bool isVariableInUse(const Index &);
+  //bool isVariableInUse(const Index &);
+  bool allDead(void);
   void calcNextState(double, const VectorAccess<double> *, VectorAccess<double>*);
   map<string, double> outcomeStats();
 protected:
